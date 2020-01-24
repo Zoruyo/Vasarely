@@ -43,7 +43,7 @@ class Point3d(Point2d):
             self.beta = 0
         else:
             super().__init__(_anotherPoint.x,_anotherPoint.y)
-            if isinstance(_anotherPoint,Point3d):
+            if isinstance(_anotherPoint,Point3d): #isinstance vérifie si _anotherPoint est un point 3D)
                 self.z = _anotherPoint.z
                 self.beta = _anotherPoint.beta
             else:
