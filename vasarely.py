@@ -1,9 +1,26 @@
 #import tkinter as tk
 import math as math
 import svgwrite as svgwrite
+import cairosvg as cairosvg
+import os
+import cv2
 
 
 
+def movie(image_folder,video_name):    
+    images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
+    frame = cv2.imread(os.path.join(image_folder, images[0]))
+    height, width, layers = frame.shape
+    
+    video = cv2.VideoWriter(video_name, 0, 40, (width,height))
+    
+    for image in images:
+        video.write(cv2.imread(os.path.join(image_folder, image)))
+    
+    cv2.destroyAllWindows()
+    video.release()
+
+    
 class Point2d:
     def __init__(self,_x=0,_y=0):
         self.x = _x
@@ -17,7 +34,7 @@ class Point2d:
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2)
 
-
+    
 class Point3d(Point2d):
     def __init__(self,_anotherPoint=None):
         if _anotherPoint is None:
@@ -41,7 +58,7 @@ class Point3d(Point2d):
         return math.sqrt(self.x**2+self.y**2+self.z**2)
 
     def rotZ(self):
-        """rotation autour de l'aze z : retourne un nouveau point qui correspond
+        """rotation autour de l'axe z : retourne un nouveau point qui correspond
         à la projection du point sur l'axe x (beta contient l'angle)
         """
         np = Point3d()
@@ -68,7 +85,7 @@ class Point3d(Point2d):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
 
-
+    
 class Sphere:
     def __init__(self,_x = 0,_y=0, _rayon = 50, _profProj = -40, _couleur = 10):
         self.C = Point3d()
@@ -143,7 +160,7 @@ class Sphere:
         #on retourne la distance entre les 2 points X et Y
         return X.dist(Y)
 
-
+    
 class Grille:
     def __init__(self,_nbColonnes, _nbLignes, _tailleCase):
         self.tailleCase = _tailleCase
@@ -177,6 +194,7 @@ class Grille:
                 xt = (self._largeur//2+2)*self.tailleCase+X.x
                 yt = (self._hauteur//2+2)*self.tailleCase+X.y
                 _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red")) """
+
     def dessineCarres(self,_svgDraw,_listeSphere):
         """fonction qui dessinne les carrés contenant les cercle """
         tab_proj = []
@@ -223,6 +241,12 @@ class Dessin:
         #self.grille.dessineCercles(self.dessin,self.sphere)
         self.grille.dessineCarres(self.dessin,listeSpheres)
         self.dessin.save()
+        
+        image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+        src = os.listdir(image_folder)
+        for files in src:
+            if files.endswith(".svg") or files.endswith(".png") or files.endswith(".avi"):
+                os.remove(image_folder+'/'+files)
 
         #
         # animation : 2 spheres se rencontrent
@@ -234,6 +258,10 @@ class Dessin:
             self.grille.dessineCarres(self.dessin,listeSpheres)
             self.dessin.save()
             print(file_name," saved\n")
+            cairosvg.svg2png(url=str(i).zfill(5)+".svg",write_to=str(i).zfill(5)+".png",parent_width=1024,parent_height=660,scale=1.0)
+            print(file_name," converted\n")
+        video_name = "vasarely.avi" 
+        movie(image_folder,video_name)
 
 
 
