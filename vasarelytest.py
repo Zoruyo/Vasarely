@@ -173,6 +173,7 @@ class Grille:
             col = []
             for j in range(_nbLignes):
                 p = Point2d(i*_tailleCase,j*_tailleCase)
+                print("Coordonnées grille ligne "+str(j)+", colonne "+str(i)+", : ",p)
                 col.append(p)
             self.tab.append(col)
 
@@ -197,7 +198,7 @@ class Grille:
                 _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red")) """
 
     def dessineCarres(self,_svgDraw,_listeSphere):
-        """fonction qui dessinne les carrés contenant les cercle """
+        """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
         for i in range(self._nbColonnes):
             tab_proj_col = []
@@ -276,6 +277,8 @@ print(p1)
 p2 = Point3d(p1) #On peut également définir un point 3D à partir d'un autre point 3D ,comme ceci:
 p2.beta = 0.607
 print(p2)
+
+g1 = Grille(5,5,5)
 
 """ tests pour vérifier que la projection fonctionne
 S1 = Sphere(-40,-120,40)
