@@ -37,10 +37,19 @@ class Point2d:
 
     
 class Point3d(Point2d):
-    def __init__(self,_x=0,_y=0,_z=0,_beta=0):
-        Point2d.__init__(self,_x,_y)
-        self.z = _z
-        self.beta = _beta
+    def __init__(self,_anotherPoint=None):
+        if _anotherPoint is None: #Si aucune coordonnée n'est définie: (0,0,0,0) par défaut
+            super().__init__()
+            self.z = 0
+            self.beta = 0
+        else: #Si un point 2D est défini:
+            super().__init__(_anotherPoint.x,_anotherPoint.y) 
+            if isinstance(_anotherPoint,Point3d): #isinstance vérifie si _anotherPoint est une instance de point 3D)
+                self.z = _anotherPoint.z #On définit ces deux coordonnées en appel une fois les coordonnées x,y définies
+                self.beta = _anotherPoint.beta
+            else: #Si z et beta ne sont pas définies, elles valent 0 par défaut
+                self.z = 0
+                self.beta = 0
         
     def __str__(self):
         return "("+str(self.x)+","+str(self.y)+","+str(self.z)+","+str(self.beta)+")"
@@ -257,10 +266,16 @@ class Dessin:
 
 
 
-d = Dessin()
+'''d = Dessin()'''
 
-'''p1=Point3d()
-print(p1)'''
+p1=Point3d(Point2d(2,5)) # Exemple : On définit un point3D comme tel
+p1.z = 3
+p1.beta = 0
+print(p1)
+
+p2 = Point3d(p1) #On peut également définir un point 3D à partir d'un autre point 3D ,comme ceci:
+p2.beta = 0.607
+print(p2)
 
 """ tests pour vérifier que la projection fonctionne
 S1 = Sphere(-40,-120,40)
@@ -305,15 +320,3 @@ X = S.proj(A0)
 print(X)
 """
 
-'''if _anotherPoint is None:
-    super().__init__()
-    self.z = 0
-    self.beta = 0
-else:
-    super().__init__(_anotherPoint.x,_anotherPoint.y)
-    if isinstance(_anotherPoint,Point3d): #isinstance vérifie si _anotherPoint est une instance de point 3D)
-        self.z = _anotherPoint.z
-        self.beta = _anotherPoint.beta
-    else:
-        self.z = 0
-        self.beta = 0'''
