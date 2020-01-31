@@ -1,4 +1,4 @@
-#Test 2
+
 #import tkinter as tk
 import math as math
 import svgwrite as svgwrite
@@ -27,7 +27,7 @@ class Point2d:
         self.x = _x
         self.y = _y
     def __str__(self):
-        return str(self.x)+","+str(self.y)
+        return "("+str(self.x)+","+str(self.y)+")"
     def norm(self):
         """calcule la norme euclidienne du vecteur"""
         return math.sqrt(self.x**2+self.y**2)
@@ -63,7 +63,7 @@ class Point3d(Point2d):
         à la projection du point sur l'axe x (beta contient l'angle)
         """
         np = Point3d()
-        np.x = math.sqrt(self.x**2+self.y**2)
+        np.x = math.sqrt(self.x**2+self.y**2) #Norme dans R^2
         np.y = 0
         np.z = 0
         if np.x!=0:
@@ -97,7 +97,18 @@ class Sphere:
         self.Cp.z = _profProj
         self.rayon = _rayon
         self.couleur = _couleur
-
+        
+    def __str__(self):     
+        return "("+str(self.Cp.x)+","+str(self.Cp.y)+","+str(self.Cp.z)+","+str(self.rayon)+","+str(self.couleur)+")"
+    
+    '''Rappel:
+        a = CA = "distance du point A sur l'axe x par rapport au point C
+        c = CC' = "distance du point C' ( pour le cône de projection) sur l'axe z 
+        par rapport au point C"
+        r = le rayon du cercle dans le plan X x Z
+        alpha = l'angle AC'C
+    '''
+    
     def deformation(self,a,r,c,alpha):
         return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
 
@@ -105,11 +116,12 @@ class Sphere:
         """calcule les coordonnées du point projeté selon le cone de revolution
            sur la surface de la sphere : A'
         """
-        if _A.dist(self.C)>self.rayon:
-            return Point3d(_A)
-        #on translate le point _A pour que le centre de la sphere soit en 0,0
-        A = Point3d(_A)
-        A.x -=  self.C.x
+        print("Distance euclidienne entre A et C (projPoint):",_A.dist(self.C))
+        print("Rayon (projPoint):",self.rayon)
+        if _A.dist(self.C)>self.rayon: #si la distance est + grande que le cercle, elle est inchangée
+            return Point3d(_A) 
+        A = Point3d(_A) #On définit le pt en paramètre comme étant un nouveau point 3D (pour des manips)
+        A.x -=  self.C.x  #on translate le point _A pour que le centre de la sphere soit en 0,0
         A.y -=  self.C.y
         A = A.rotZ()
         a = A.x
@@ -173,7 +185,7 @@ class Grille:
             col = []
             for j in range(_nbLignes):
                 p = Point2d(i*_tailleCase,j*_tailleCase)
-                print("Coordonnées grille ligne "+str(j)+", colonne "+str(i)+", : ",p)
+                print("Coordonnées grille colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",p)
                 col.append(p)
             self.tab.append(col)
 
@@ -214,6 +226,7 @@ class Grille:
                             W = None
                         #W.sphere = sph
                 tab_proj_col.append(W)
+                print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",p)
             tab_proj.append(tab_proj_col)
         #
         # #on peut dessiner
@@ -269,14 +282,24 @@ class Dessin:
 
 '''d = Dessin()'''
 
+'''p3 = Point2d(2,3)
+print(p3.norm())'''
+
 p1=Point3d(Point2d(2,5)) # Exemple : On définit un point3D comme tel
 p1.z = 3
 p1.beta = 0
-print(p1)
 
 p2 = Point3d(p1) #On peut également définir un point 3D à partir d'un autre point 3D ,comme ceci:
+p2.x = 14
+p2.y = 7
+p2.z = -3
 p2.beta = 0.607
-print(p2)
+print("P2:",p2)
+'''print("Test distance euclidienne:",p2.dist(p1))'''
+
+'''p3 = p2.rotZ()
+print("Rotation de P2:",p3)'''
+
 
 g1 = Grille(5,5,5)
 
@@ -294,6 +317,12 @@ print("t=",t)
 z = S2.projPoint(A)
 print("A=",A)
 print("z=",z)
+
+s1 = Sphere(30,10,40) 
+print("Sphère S1:",s1)
+
+print("Projection point:",s1.projPoint(p2))
+print("Projection distance à partir de P2:",s1.projDist(p2,20))
 """
 
 
