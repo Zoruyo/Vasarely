@@ -94,12 +94,15 @@ class Sphere:
         self.C.y = _y
         self.C.z = 0
         self.Cp = Point3d(self.C)
-        self.Cp.z = _profProj
+        if _profProj != 0:
+            self.Cp.z = _profProj
+        else:
+            self.Cp.z = 1
         self.rayon = _rayon
         self.couleur = _couleur
         
     def __str__(self):     
-        return "("+str(self.Cp.x)+","+str(self.Cp.y)+","+str(self.Cp.z)+","+str(self.rayon)+","+str(self.couleur)+")"
+        return "("+str(self.Cp.x)+","+str(self.Cp.y)+","+str(self.rayon)+","+str(self.Cp.z)+","+str(self.couleur)+")"
     
     '''Rappel:
         a = CA = "distance du point A sur l'axe x par rapport au point C
@@ -116,8 +119,8 @@ class Sphere:
         """calcule les coordonnées du point projeté selon le cone de revolution
            sur la surface de la sphere : A'
         """
-        print("Distance euclidienne entre A et C (projPoint):",_A.dist(self.C))
-        print("Rayon (projPoint):",self.rayon)
+        #print("Distance euclidienne entre A et C (projPoint):",_A.dist(self.C))
+        #print("Rayon (projPoint):",self.rayon)
         if _A.dist(self.C)>self.rayon: #si la distance est + grande que le cercle, elle est inchangée
             return Point3d(_A) 
         A = Point3d(_A) #On définit le pt en paramètre comme étant un nouveau point 3D (pour des manips)
@@ -172,6 +175,14 @@ class Sphere:
         Y.z = 0
         #on retourne la distance entre les 2 points X et Y
         return X.dist(Y)
+    
+    def biggestradius(self,listeSpheres):
+        radius = 0
+        for sph in listeSpheres:
+            if radius < sph.rayon:
+                radius = sph.rayon
+        print(radius)        
+        return radius     
 
     
 class Grille:
@@ -185,7 +196,7 @@ class Grille:
             col = []
             for j in range(_nbLignes):
                 p = Point2d(i*_tailleCase,j*_tailleCase)
-                print("Coordonnées grille colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",p)
+                #print("Coordonnées grille colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",p)
                 col.append(p)
             self.tab.append(col)
 
@@ -215,18 +226,22 @@ class Grille:
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
-                W = Point3d(self.tab[i][j])
+                W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    t = sph.projPoint(self.tab[i][j])
+                    if sph.rayon == sph.biggestradius(_listeSphere):
+                        s = sph   
+                        t = s.projPoint(self.tab[i][j]) #on projete le point2D sur chaque sphère
+                    else:
+                        t = sph.projPoint(self.tab[i][j])
                     #print("test:(",i,",",j,")=",isinstance(t,Point3d))
-                    if W is None or t.z > W.z:
-                        if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
+                    if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                        if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
                             W = Point3d(t)
                         else:
                             W = None
                         #W.sphere = sph
                 tab_proj_col.append(W)
-                print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",p)
+                #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
         #
         # #on peut dessiner
@@ -243,19 +258,18 @@ class Grille:
 
 class Dessin:
     def __init__(self, hauteur = 100, largeur=100):
-        self.grille = Grille(100,100,10)
-        print("Grille=",self.grille)
+        #self.grille = Grille(100,100,10)
+        #print("Grille=",self.grille)
         #self.sphere1 = Sphere(80,30,120)
         #self.sphere2 = Sphere(-40,-80,100)
         # cas de 2 spheres imbriquées
-        #listeSpheres = [ Sphere(-40,-120,40),Sphere(-40,-120,120)]
         # cas de 2 spheres qui se touchent
-        listeSpheres = [Sphere(255,355,122,-150,40),Sphere(305,425,82,-50,40)]#,Sphere(40,80,100,-40,100),Sphere(60,50,140,-40,60)]
+        #listeSpheres = [Sphere(255,355,122,-150,40),Sphere(305,425,82,-50,40)]#,Sphere(40,80,100,-40,100),Sphere(60,50,140,-40,60)]
         #listeSpheres = [ Sphere(-40,-80,100,-40,100),Sphere(80,30,120,-40,40)]
-        self.dessin = svgwrite.Drawing('test_vasarely.svg', profile='tiny')
+        #self.dessin = svgwrite.Drawing('test_vasarely.svg', profile='tiny')
         #self.grille.dessineCercles(self.dessin,self.sphere)
-        self.grille.dessineCarres(self.dessin,listeSpheres)
-        self.dessin.save()
+        #self.grille.dessineCarres(self.dessin,listeSpheres)
+        #self.dessin.save()
         
         image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
         src = os.listdir(image_folder)
@@ -266,26 +280,28 @@ class Dessin:
         #
         # animation : 2 spheres se rencontrent
         self.grille = Grille(60,60,10)
-        for i in range(400):
-            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
-            file_name = str(i).zfill(5)+".svg"
-            self.dessin = svgwrite.Drawing(file_name, profile='tiny')
-            self.grille.dessineCarres(self.dessin,listeSpheres)
-            self.dessin.save()
-            print(file_name," saved\n")
-            cairosvg.svg2png(url=str(i).zfill(5)+".svg",write_to=str(i).zfill(5)+".png",parent_width=1024,parent_height=660,scale=1.0)
-            print(file_name," converted\n")
+        i=1
+        #for i in range(400):
+        #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
+        #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
+        listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
+        file_name = str(i).zfill(5)+".svg"
+        self.dessin = svgwrite.Drawing(file_name, profile='tiny')
+        self.grille.dessineCarres(self.dessin,listeSpheres)
+        self.dessin.save()
+        print(file_name," saved\n")
+        cairosvg.svg2png(url=str(i).zfill(5)+".svg",write_to=str(i).zfill(5)+".png",parent_width=1024,parent_height=660,scale=1.0)
+        print(file_name," converted\n")
         video_name = "vasarely.avi" 
         movie(image_folder,video_name)
 
 
-
-'''d = Dessin()'''
+d = Dessin()
 
 '''p3 = Point2d(2,3)
 print(p3.norm())'''
 
-p1=Point3d(Point2d(2,5)) # Exemple : On définit un point3D comme tel
+'''p1=Point3d(Point2d(2,5)) # Exemple : On définit un point3D comme tel
 p1.z = 3
 p1.beta = 0
 
@@ -294,14 +310,13 @@ p2.x = 14
 p2.y = 7
 p2.z = -3
 p2.beta = 0.607
-print("P2:",p2)
+print("P2:",p2)'''
 '''print("Test distance euclidienne:",p2.dist(p1))'''
 
 '''p3 = p2.rotZ()
 print("Rotation de P2:",p3)'''
 
-
-g1 = Grille(5,5,5)
+'''g1 = Grille(5,5,5)'''
 
 """ tests pour vérifier que la projection fonctionne
 S1 = Sphere(-40,-120,40)
@@ -318,13 +333,16 @@ z = S2.projPoint(A)
 print("A=",A)
 print("z=",z)
 
-s1 = Sphere(30,10,40) 
-print("Sphère S1:",s1)
 
-print("Projection point:",s1.projPoint(p2))
-print("Projection distance à partir de P2:",s1.projDist(p2,20))
 """
 
+'''s1 = Sphere(30,10,40,50,50) 
+print("Sphère S1:",s1)'''
+
+"""
+print("Projection point:",s1.projPoint(p2))
+print("Projection distance à partir de P2:",s1.projDist(p2,20))'''
+"""
 
 """
 dwg = svgwrite.Drawing('test.svg', profile='tiny')
@@ -351,4 +369,3 @@ S = Sphere()
 X = S.proj(A0)
 print(X)
 """
-
