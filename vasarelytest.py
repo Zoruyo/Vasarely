@@ -13,7 +13,7 @@ def movie(image_folder,video_name):
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
     
-    video = cv2.VideoWriter(video_name, 0, 40, (width,height))
+    video = cv2.VideoWriter(video_name, 0, 30, (width,height))
     
     for image in images:
         video.write(cv2.imread(os.path.join(image_folder, image)))
@@ -223,23 +223,24 @@ class Grille:
     def dessineCarres(self,_svgDraw,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
+        sph_tab = []
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
                 W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    if sph.rayon == sph.biggestradius(_listeSphere):
-                        s = sph   
-                        t = s.projPoint(self.tab[i][j]) #on projete le point2D sur chaque sphère
-                    else:
+                    w = Point3d(self.tab[i][j])
+                    if (w.x,w.y,w.z) not in sph_tab :
                         t = sph.projPoint(self.tab[i][j])
-                    #print("test:(",i,",",j,")=",isinstance(t,Point3d))
-                    if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-                        if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
-                            W = Point3d(t)
-                        else:
-                            W = None
-                        #W.sphere = sph
+                        #print("test:(",i,",",j,")=",isinstance(t,Point3d))
+                        if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                            if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
+                                W = Point3d(t)
+                            else:
+                                W = None
+                            #W.sphere = sph
+                    if W.x != w.x and W.y != w.y and W.z != w.z:
+                        sph_tab.append((w.x,w.y,w.z))
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
@@ -254,7 +255,7 @@ class Grille:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-
+        #2print(sph_tab)
 
 class Dessin:
     def __init__(self, hauteur = 100, largeur=100):
@@ -281,17 +282,17 @@ class Dessin:
         # animation : 2 spheres se rencontrent
         self.grille = Grille(60,60,10)
         i=1
-        #for i in range(400):
-        #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
-        #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
-        listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
-        file_name = str(i).zfill(5)+".svg"
-        self.dessin = svgwrite.Drawing(file_name, profile='tiny')
-        self.grille.dessineCarres(self.dessin,listeSpheres)
-        self.dessin.save()
-        print(file_name," saved\n")
-        cairosvg.svg2png(url=str(i).zfill(5)+".svg",write_to=str(i).zfill(5)+".png",parent_width=1024,parent_height=660,scale=1.0)
-        print(file_name," converted\n")
+        for i in range(10,200):
+            #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
+            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
+            #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
+            file_name = str(i).zfill(5)+".svg"
+            self.dessin = svgwrite.Drawing(file_name, profile='tiny')
+            self.grille.dessineCarres(self.dessin,listeSpheres)
+            self.dessin.save()
+            print(file_name," saved\n")
+            cairosvg.svg2png(url=str(i).zfill(5)+".svg",write_to=str(i).zfill(5)+".png",parent_width=1024,parent_height=660,scale=1.0)
+            print(file_name," converted\n")
         video_name = "vasarely.avi" 
         movie(image_folder,video_name)
 
