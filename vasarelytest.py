@@ -223,14 +223,14 @@ class Grille:
     def dessineCarres(self,_svgDraw,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
-        sph_tab = []
+        sph_tab = [] #Liste de spoints qui ont bien été projetés sur une sphère
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
                 W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
                     w = Point3d(self.tab[i][j])
-                    if (w.x,w.y,w.z) not in sph_tab :
+                    if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
                         t = sph.projPoint(self.tab[i][j])
                         #print("test:(",i,",",j,")=",isinstance(t,Point3d))
                         if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
@@ -239,7 +239,7 @@ class Grille:
                             else:
                                 W = None
                             #W.sphere = sph
-                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z:
+                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z: #Si le pointa bien été projeté, on l'ajoute à sph_tab
                         sph_tab.append((w.x,w.y,w.z))
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
