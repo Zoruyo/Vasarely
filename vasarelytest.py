@@ -239,7 +239,7 @@ class Grille:
                             else:
                                 W = None
                             #W.sphere = sph
-                    if W.x != w.x and W.y != w.y and W.z != w.z:
+                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z:
                         sph_tab.append((w.x,w.y,w.z))
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
@@ -281,10 +281,9 @@ class Dessin:
         #
         # animation : 2 spheres se rencontrent
         self.grille = Grille(60,60,10)
-        i=1
-        for i in range(10,200):
+        for i in range(1,80):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
-            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
+            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
             file_name = str(i).zfill(5)+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
