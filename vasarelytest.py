@@ -1,4 +1,3 @@
-
 #import tkinter as tk
 import math as math
 import svgwrite as svgwrite
@@ -8,15 +7,16 @@ import cv2
 
 
 
-def movie(image_folder,video_name):    
+def movie(image_folder,video_name,slow_motion=1):    
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
     
-    video = cv2.VideoWriter(video_name, 0, 30, (width,height))
+    video = cv2.VideoWriter(video_name, 0, 40, (width,height))
     
     for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
+        for i in range(slow_motion):
+            video.write(cv2.imread(os.path.join(image_folder, image)))
     
     cv2.destroyAllWindows()
     video.release()
@@ -258,7 +258,7 @@ class Grille:
         #2print(sph_tab)
 
 class Dessin:
-    def __init__(self, hauteur = 100, largeur=100):
+    def __init__(self, hauteur = 60, largeur=60):
         #self.grille = Grille(100,100,10)
         #print("Grille=",self.grille)
         #self.sphere1 = Sphere(80,30,120)
@@ -272,28 +272,48 @@ class Dessin:
         #self.grille.dessineCarres(self.dessin,listeSpheres)
         #self.dessin.save()
         
-        image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
-        src = os.listdir(image_folder)
-        for files in src:
-            if files.endswith(".svg") or files.endswith(".png") or files.endswith(".avi"):
-                os.remove(image_folder+'/'+files)
+        if os.getlogin() == "lebre":
+            folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            image_folder = folder + "\Products"
+            sep = '/'
+            src = os.listdir(image_folder)
+            for files in src:
+                if files.endswith(".svg") or files.endswith(".png") or files.endswith(".avi"):
+                    os.remove(image_folder+'/'+files)
+        else:
+            folder = r"C:\Users\\" + os.getlogin() + r"\Desktop\Projet Vasarely"
+            image_folder = folder + r"\Products"
+            sep = '\\'
+            src = os.listdir(image_folder)
+            for files in src:
+                if files.endswith(".svg") or files.endswith(".png"):
+                    os.remove(image_folder+sep+files)
+            src = os.listdir(folder)
+            for video in src:
+                if video.endswith(".avi"):
+                    os.remove(folder+sep+video)
 
         #
         # animation : 2 spheres se rencontrent
-        self.grille = Grille(60,60,10)
-        for i in range(1,80):
+        self.grille = Grille(hauteur,largeur,10)
+        start,end = 115,130
+        print("Modeling from frame",start,"to",end,"\n\n")
+        for i in range(start,end):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
-            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
+            #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
-            file_name = str(i).zfill(5)+".svg"
+            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
+            size_numbers = str(max(start,end))
+            file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
             self.grille.dessineCarres(self.dessin,listeSpheres)
             self.dessin.save()
-            print(file_name," saved\n")
-            cairosvg.svg2png(url=str(i).zfill(5)+".svg",write_to=str(i).zfill(5)+".png",parent_width=1024,parent_height=660,scale=1.0)
-            print(file_name," converted\n")
-        video_name = "vasarely.avi" 
-        movie(image_folder,video_name)
+            print(os.path.split(file_name)[1]," saved",end=' ')
+            cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
+            print("and converted\n")
+        video_name = "vasarely.avi"
+        movie(image_folder,video_name,10)
+        print(video_name," saved\n")
 
 
 d = Dessin()
