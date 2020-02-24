@@ -182,8 +182,16 @@ class Sphere:
             if radius < sph.rayon:
                 radius = sph.rayon
         print(radius)        
-        return radius     
-
+        return radius   
+    
+    def lissage(self,L,e,listeSpheres):
+        for sph in listeSpheres:
+            for i in range(len(L)):
+                for j in range(len(L[i])):
+                    W = Point3d(L[i][j])
+                    if sqrt((W.x-sph.x)**2+(W.y-sph.y)**2) <= R+e and sqrt((W.x-sph.x)**2+(W.y-sph.y)**2) >= R-e:
+                        
+        '''https://svgwrite.readthedocs.io/en/latest/classes/path.html#svgwrite.path.Path  ''' 
     
 class Grille:
     def __init__(self,_nbColonnes, _nbLignes, _tailleCase):
@@ -244,7 +252,10 @@ class Grille:
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
-        #
+            
+        # on peut lisser
+        epsilon = 1/5*self.rayon 
+        
         # #on peut dessiner
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
