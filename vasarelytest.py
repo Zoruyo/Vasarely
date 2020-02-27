@@ -113,7 +113,7 @@ class Sphere:
     '''
     
     def deformation(self,a,r,c,alpha):
-        return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
+            return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
 
     def projPoint(self,_A):
         """calcule les coordonnées du point projeté selon le cone de revolution
@@ -182,16 +182,9 @@ class Sphere:
             if radius < sph.rayon:
                 radius = sph.rayon
         print(radius)        
-        return radius   
-    
-    def lissage(self,L,e,listeSpheres):
-        for sph in listeSpheres:
-            for i in range(len(L)):
-                for j in range(len(L[i])):
-                    W = Point3d(L[i][j])
-                    if sqrt((W.x-sph.x)**2+(W.y-sph.y)**2) <= R+e and sqrt((W.x-sph.x)**2+(W.y-sph.y)**2) >= R-e:
+        return radius              
                         
-        '''https://svgwrite.readthedocs.io/en/latest/classes/path.html#svgwrite.path.Path  ''' 
+    '''https://svgwrite.readthedocs.io/en/latest/classes/path.html#svgwrite.path.Path  ''' 
     
 class Grille:
     def __init__(self,_nbColonnes, _nbLignes, _tailleCase):
@@ -228,15 +221,17 @@ class Grille:
                 yt = (self._hauteur//2+2)*self.tailleCase+X.y
                 _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red")) """
 
-    def dessineCarres(self,_svgDraw,_listeSphere):
+    def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
-        sph_tab = [] #Liste de spoints qui ont bien été projetés sur une sphère
+        WL = [] #Liste des W déjà modifiés
+        sph_tab = [] #Liste des points qui ont bien été projetés sur une sphère
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
                 W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
+                    e = math.ceil((1/4)*sph.rayon)
                     w = Point3d(self.tab[i][j])
                     if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
                         t = sph.projPoint(self.tab[i][j])
@@ -247,16 +242,40 @@ class Grille:
                             else:
                                 W = None
                             #W.sphere = sph
-                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z: #Si le pointa bien été projeté, on l'ajoute à sph_tab
+                        if W.dist(sph.Cp) <= sph.rayon+e and W.dist(sph.Cp) >= sph.rayon-e and W not in WL:
+                            WL.append(W)
+                            print(W.dist(sph.Cp)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
+                            W.rotZ()
+                            W.x = W.x*math.cos(45)
+                            W.arcRotZ()
+                            WL.append(W)                 
+                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z: #Si le point a bien été projeté, on l'ajoute à sph_tab
                         sph_tab.append((w.x,w.y,w.z))
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
-            
-        # on peut lisser
-        epsilon = 1/5*self.rayon 
-        
-        # #on peut dessiner
+        return tab_proj
+    '''
+    def lissage(self,tab_proj,listeSpheres):
+        WL = [] #Liste des W déjà modifiés
+        for sph in listeSpheres:
+            e = math.ceil((1/4)*sph.rayon)
+            for i in range(len(tab_proj)):
+                for j in range(len(tab_proj[i])):
+                    W = Point3d(tab_proj[i][j])
+                    if W.dist(sph.Cp) <= sph.rayon+e and W.dist(sph.Cp) >= sph.rayon-e and W not in WL:
+                        WL.append(W)
+                        print(W.dist(sph.Cp)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
+                        W.rotZ()
+                        W.arcRotZ()
+                        WL.append(W)
+                        tab_proj[i][j] = W
+        print(WL)                
+        return tab_proj   
+ 
+    '''       
+    #on peut dessiner
+    def dessiner(self,tab_proj,_svgDraw):
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
                 P = tab_proj[i][j]
@@ -284,8 +303,7 @@ class Dessin:
         #self.dessin.save()
         
         if os.getlogin() == "lebre":
-            folder = "C:/Users/lebre/.spyder-py3/Projet S4"
-            image_folder = folder + "\Products"
+            image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
             sep = '/'
             src = os.listdir(image_folder)
             for files in src:
@@ -309,7 +327,7 @@ class Dessin:
         self.grille = Grille(hauteur,largeur,10)
         start,end = 115,130
         print("Modeling from frame",start,"to",end,"\n\n")
-        for i in range(start,end):
+        for i in range(start,end+1):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
@@ -317,7 +335,9 @@ class Dessin:
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
-            self.grille.dessineCarres(self.dessin,listeSpheres)
+            tab_proj = self.grille.dessineCarres(listeSpheres)
+            #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
+            self.grille.dessiner(tab_proj,self.dessin)
             self.dessin.save()
             print(os.path.split(file_name)[1]," saved",end=' ')
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
@@ -367,8 +387,10 @@ print("z=",z)
 
 """
 
+
 '''s1 = Sphere(30,10,40,50,50) 
-print("Sphère S1:",s1)'''
+print("Sphère S1:",s1)
+print(s1.rayon)'''
 
 """
 print("Projection point:",s1.projPoint(p2))
