@@ -231,7 +231,6 @@ class Grille:
             for j in range(self._nbLignes):
                 W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    e = math.ceil((1/4)*sph.rayon)
                     w = Point3d(self.tab[i][j])
                     if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
                         t = sph.projPoint(self.tab[i][j])
@@ -241,39 +240,53 @@ class Grille:
                                 W = Point3d(t)
                             else:
                                 W = None
-                            #W.sphere = sph
-                        if W.dist(sph.Cp) <= sph.rayon+e and W.dist(sph.Cp) >= sph.rayon-e and W not in WL:
-                            WL.append(W)
-                            print(W.dist(sph.Cp)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
-                            W.rotZ()
-                            W.x = W.x*math.cos(45)
-                            W.arcRotZ()
-                            WL.append(W)                 
+                            #W.sphere = sph             
                     if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z: #Si le point a bien été projeté, on l'ajoute à sph_tab
                         sph_tab.append((w.x,w.y,w.z))
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
         return tab_proj
-    '''
+    
     def lissage(self,tab_proj,listeSpheres):
         WL = [] #Liste des W déjà modifiés
         for sph in listeSpheres:
+            inc = 0
             e = math.ceil((1/4)*sph.rayon)
             for i in range(len(tab_proj)):
                 for j in range(len(tab_proj[i])):
                     W = Point3d(tab_proj[i][j])
-                    if W.dist(sph.Cp) <= sph.rayon+e and W.dist(sph.Cp) >= sph.rayon-e and W not in WL:
-                        WL.append(W)
-                        print(W.dist(sph.Cp)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
-                        W.rotZ()
-                        W.arcRotZ()
-                        WL.append(W)
-                        tab_proj[i][j] = W
-        print(WL)                
+                    if W.dist(sph.C) <= sph.rayon+e and W.dist(sph.C) >= sph.rayon-e and W not in WL:
+                        #print(W.dist(sph.C)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
+                        if inc == 1:
+                            A = Point3d(W)
+                            print((A.x,A.y))    
+                        W.x -= sph.C.x #Pour que le centre de la sphère soit en (0,0)
+                        W.y -= sph.C.y
+                        W =  W.rotZ()
+                        a = W.x
+                        X = Point3d()
+                        X.x = math.exp(-a**2)*(sph.rayon-e)
+                        X.z = math.sqrt((sph.rayon)**2-X.x**2)
+                        if inc == 1:
+                            A = Point3d(X)
+                            print((W.x,W.y)) 
+                        X.y = 0
+                        X.arcRotZ(W.beta)
+                        X.x += sph.C.x 
+                        X.y += sph.C.y
+                        if inc == 1:
+                            A = Point3d(X)
+                            print((A.x,A.y)) 
+                        WL.append(X)
+                        tab_proj[i][j] = X
+                        if inc == 1:
+                            print(tab_proj[i][j],"\n") 
+                        inc += 1
+                        
         return tab_proj   
  
-    '''       
+        
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw):
         for i in range(self._nbColonnes-1):
@@ -325,7 +338,7 @@ class Dessin:
         #
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 115,130
+        start,end = 115,115
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
@@ -336,7 +349,7 @@ class Dessin:
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
             tab_proj = self.grille.dessineCarres(listeSpheres)
-            #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
+            tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin)
             self.dessin.save()
             print(os.path.split(file_name)[1]," saved",end=' ')
@@ -347,12 +360,15 @@ class Dessin:
         print(video_name," saved\n")
 
 
+
+
 d = Dessin()
 
-'''p3 = Point2d(2,3)
-print(p3.norm())'''
+'''
+p3 = Point2d(2,3)
+print(p3.norm())
 
-'''p1=Point3d(Point2d(2,5)) # Exemple : On définit un point3D comme tel
+p1=Point3d(Point2d(2,5)) # Exemple : On définit un point3D comme tel
 p1.z = 3
 p1.beta = 0
 
