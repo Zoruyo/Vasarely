@@ -326,7 +326,18 @@ class Grille:
                 Q = tab_proj[i][j+1]
                 R = tab_proj[i+1][j]
                 if not P is None and not Q is None:
-                    _svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    """ 3 façons de tracer une ligne:
+                    1. fonction ligne
+                    2. fonction path avec commande ligne
+                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
+                    # 1.
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
+                    # 2. M: indique le début de tracé; P = Point de départ; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    # 3. Même légende que 2. + vecteur (Q.x-S.x,Q.y-S.y) = (O,O) donc la courbe reste une ligne
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
         #2print(sph_tab)
