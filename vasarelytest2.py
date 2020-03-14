@@ -340,7 +340,6 @@ class Grille:
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-        #2print(sph_tab)
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         _svgDraw.add(_svgDraw.circle((235,355), 122-5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
         _svgDraw.add(_svgDraw.circle((235,355), 122+5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
