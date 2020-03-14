@@ -144,7 +144,7 @@ class Sphere:
                 Y.x = self.deformation(b,r,c,alpha)
                 Y.z = math.sqrt(r**2-Y.x**2)
                 X.x = self.lissage(a,r,e,Y.z)
-                X.z = math.sqrt(r**2-X.x**2)
+                #X.z = math.sqrt(r**2-X.x**2)
             else:
                 X.x = self.deformation(a,r,c,alpha)
                 X.z = math.sqrt(r**2-X.x**2)
@@ -195,7 +195,6 @@ class Sphere:
         b2 = B.x    
         if a!= 0:
             if _A.dist(self.C) <= r+e and _A.dist(self.C) >= r-e:
-                pass
                 Y1.x = self.deformation(b2,r,c,alpha)
                 Y1.z = math.sqrt(r**2-Y1.x**2)
                 Z.x = self.lissage(a,r,e,Y2.z)              
