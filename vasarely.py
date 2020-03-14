@@ -301,15 +301,19 @@ class Grille:
                     3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
                     # 1.
                     #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
-                    # 2. M: indique le début de tracé; P = Point de départ; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
                     #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
                     #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                    # 3. Même légende que 2. + vecteur (Q.x-S.x,Q.y-S.y) = (O,O) donc la courbe reste une ligne
+                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-        #2print(sph_tab)
+        # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
+        _svgDraw.add(_svgDraw.circle((235,355), 122-5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((235,355), 122+5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((335,465), 82-5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((335,465), 82+5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -328,7 +332,8 @@ class Dessin:
         #self.dessin.save()
         
         if os.getlogin() == "lebre":
-            image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            image_folder = folder
             sep = '/'
             src = os.listdir(image_folder)
             for files in src:
@@ -342,10 +347,10 @@ class Dessin:
             for files in src:
                 if files.endswith(".svg") or files.endswith(".png"):
                     os.remove(image_folder+sep+files)
-            src = os.listdir(folder)
+            src = os.listdir(image_folder)
             for video in src:
                 if video.endswith(".avi"):
-                    os.remove(folder+sep+video)
+                    os.remove(image_folder+sep+video)
 
         #
         # animation : 2 spheres se rencontrent
@@ -367,9 +372,9 @@ class Dessin:
             print(os.path.split(file_name)[1]," saved",end=' ')
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print("and converted\n")
-        video_name = "vasarely.avi"
+        video_name = image_folder+sep+"vasarely.avi"
         movie(image_folder,video_name,10)
-        print(video_name," saved\n")
+        print(os.path.split(video_name)[1]," saved\n")
 
 
 
