@@ -362,7 +362,8 @@ class Dessin:
         #self.dessin.save()
         
         if os.getlogin() == "lebre":
-            image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            image_folder = folder
             sep = '/'
             src = os.listdir(image_folder)
             for files in src:
@@ -376,10 +377,10 @@ class Dessin:
             for files in src:
                 if files.endswith(".svg") or files.endswith(".png"):
                     os.remove(image_folder+sep+files)
-            src = os.listdir(folder)
+            src = os.listdir(image_folder)
             for video in src:
                 if video.endswith(".avi"):
-                    os.remove(folder+sep+video)
+                    os.remove(image_folder+sep+video)
 
         #
         # animation : 2 spheres se rencontrent
@@ -401,9 +402,9 @@ class Dessin:
             print(os.path.split(file_name)[1]," saved",end=' ')
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print("and converted\n")
-        video_name = "vasarely.avi"
+        video_name = image_folder+sep+"vasarely.avi"
         movie(image_folder,video_name,10)
-        print(video_name," saved\n")
+        print(os.path.split(video_name)[1]," saved\n")
 
 
 
