@@ -248,7 +248,7 @@ class Grille:
             tab_proj.append(tab_proj_col)
         return tab_proj
     
-    '''def lissage(self,tab_proj,listeSpheres):
+    ''' def lissage(self,tab_proj,listeSpheres):
         WL = [] #Liste des W déjà modifiés
         for sph in listeSpheres:
             inc = 0
@@ -256,7 +256,9 @@ class Grille:
             for i in range(len(tab_proj)):
                 for j in range(len(tab_proj[i])):
                     W = Point3d(tab_proj[i][j])
-                    if W.dist(sph.C) <= sph.rayon+e and W.dist(sph.C) >= sph.rayon-e and W not in WL:
+                    W0 = Point3d(W)
+                    W.z = 0
+                    if W0.dist(sph.C) <= sph.rayon+e and W0.dist(sph.C) >= sph.rayon-e and W not in WL:
                         #print(W.dist(sph.C)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
                         if inc == 1:
                             A = Point3d(W)
@@ -284,18 +286,28 @@ class Grille:
                             print(tab_proj[i][j],"\n") 
                         inc += 1
                         
-        return tab_proj   
-    ''' 
+        return tab_proj   '''
+
         
     #on peut dessiner
-    def dessiner(self,tab_proj,_svgDraw):
-        e = 5
+    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
+        e = 20
+        listeP = []
+        listeQ = [] #On conserve également les points Q et R pour pouvoir appliquer Bézier par la suite sur chaque couple (P,Q) de l'intervalle [R+e,R-e]
+        listeR = []
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
-                P = tab_proj[i][j]
-                Q = tab_proj[i][j+1]
-                R = tab_proj[i+1][j]
-                if not P is None and not Q is None:
+               P = tab_proj[i][j]
+               Q = tab_proj[i][j+1]
+               R = tab_proj[i+1][j]
+               for sph in listeSpheres:
+                   P0 = Point3d(P)
+                   P0.z = 0
+                   if P0.dist(sph.C) <= sph.rayon + e and P0.dist(sph.C) >= sph.rayon - e:
+                       listeP.append(P)
+                       listeQ.append(Q)
+                       listeR.append(R)
+               if not P is None and not Q is None and P not in listeP:
                     """ 3 façons de tracer une ligne:
                     1. fonction ligne
                     2. fonction path avec commande ligne
@@ -308,10 +320,16 @@ class Grille:
                     # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                if not P is None and not R is None:
+               elif P in listeP:   
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier (à définir pour chaque couple (P,Q))
+               if not P is None and not R is None and P not in listeP:
                     #_svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 100, 16, '%')))
+               elif P in listeP:
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         _svgDraw.add(_svgDraw.circle((235,355), 122-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
         _svgDraw.add(_svgDraw.circle((235,355), 122+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
@@ -369,7 +387,7 @@ class Dessin:
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
             tab_proj = self.grille.dessineCarres(listeSpheres)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
-            self.grille.dessiner(tab_proj,self.dessin)
+            self.grille.dessiner(tab_proj,self.dessin,listeSpheres)
             self.dessin.save()
             print(os.path.split(file_name)[1]," saved",end=' ')
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
