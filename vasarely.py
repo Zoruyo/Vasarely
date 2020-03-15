@@ -1,4 +1,4 @@
-#import tkinter as tk
+        #import tkinter as tk
 import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
@@ -115,7 +115,7 @@ class Sphere:
     def deformation(self,a,r,c,alpha):
             return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
 
-    def projPoint(self,_A,e):
+    def projPoint(self,_A):
         """calcule les coordonnées du point projeté selon le cone de revolution
            sur la surface de la sphere : A'
         """
@@ -145,7 +145,7 @@ class Sphere:
         X.y += self.C.y
         return X
 
-    def projDist(self,_A,_d,e):
+    def projDist(self,_A,_d):
         """calcule la projection d'une distance à partir d'un point"""
         if _A.dist(self.C)>self.rayon:
             return _d
@@ -221,7 +221,7 @@ class Grille:
                 yt = (self._hauteur//2+2)*self.tailleCase+X.y
                 _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red")) """
 
-    def dessineCarres(self,_listeSphere,e):
+    def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
         WL = [] #Liste des W déjà modifiés
@@ -233,7 +233,7 @@ class Grille:
                 for sph in _listeSphere:
                     w = Point3d(self.tab[i][j])
                     if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
-                        t = sph.projPoint(self.tab[i][j],e)
+                        t = sph.projPoint(self.tab[i][j])
                         #print("test:(",i,",",j,")=",isinstance(t,Point3d))
                         if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
                             if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
@@ -289,6 +289,7 @@ class Grille:
         
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw):
+        e = 5
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
                 P = tab_proj[i][j]
@@ -308,16 +309,17 @@ class Grille:
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
-                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 100, 16, '%')))
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
-        _svgDraw.add(_svgDraw.circle((235,355), 122-5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((235,355), 122+5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((335,465), 82-5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((335,465), 82+5, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((235,355), 122-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((235,355), 122+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((335,465), 82-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((335,465), 82+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
-        e = 5
         #self.grille = Grille(100,100,10)
         #print("Grille=",self.grille)
         #self.sphere1 = Sphere(80,30,120)
@@ -365,7 +367,7 @@ class Dessin:
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
-            tab_proj = self.grille.dessineCarres(listeSpheres,e)
+            tab_proj = self.grille.dessineCarres(listeSpheres)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin)
             self.dessin.save()
