@@ -1,4 +1,3 @@
-        #import tkinter as tk
 import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
@@ -35,19 +34,22 @@ class Point2d:
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2)
 
-    
 class Point3d(Point2d):
     def __init__(self,_anotherPoint=None):
-        if _anotherPoint is None: #Si aucune coordonnée n'est définie: (0,0,0,0) par défaut
+        #Si aucune coordonnée n'est définie: (0,0,0,0) par défaut
+        if _anotherPoint is None:
             super().__init__()
             self.z = 0
             self.beta = 0
-        else: #Si un point 2D est défini:
+        #Si un point 2D est défini:
+        else:
             super().__init__(_anotherPoint.x,_anotherPoint.y) 
-            if isinstance(_anotherPoint,Point3d): #isinstance vérifie si _anotherPoint est une instance de point 3D)
-                self.z = _anotherPoint.z #On définit ces deux coordonnées en appel une fois les coordonnées x,y définies
+            #isinstance vérifie si _anotherPoint est une instance de Point3d
+            if isinstance(_anotherPoint,Point3d):
+                self.z = _anotherPoint.z
                 self.beta = _anotherPoint.beta
-            else: #Si z et beta ne sont pas définies, elles valent 0 par défaut
+            #Si z et beta ne sont pas définies, elles valent 0 par défaut
+            else:
                 self.z = 0
                 self.beta = 0
     def __str__(self):
@@ -75,8 +77,6 @@ class Point3d(Point2d):
             self.beta = _beta
         self.x = t*math.cos(self.beta)
         self.y = t*math.sin(self.beta)
-        # on ne change pas z
-        # self.z = 0;
     def dist(self,_A):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
