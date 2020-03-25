@@ -63,7 +63,7 @@ class Point3d(Point2d):
         à la projection du point sur l'axe x (beta contient l'angle)
         """
         np = Point3d()
-        np.x = math.sqrt(self.x**2+self.y**2) #Norme dans R^2
+        np.x = super().norm()
         np.y = 0
         np.z = 0
         if np.x!=0:
