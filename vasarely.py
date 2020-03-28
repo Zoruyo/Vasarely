@@ -354,8 +354,8 @@ class Grille:
         _svgDraw.add(_svgDraw.circle((335,465), 82+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
         '''       
 
-"""J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
-DES CAS POUR VISUALISER COMMENT CA SE PASSE NIVEAU COLLISION"""
+    """J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
+    DES CAS POUR VISUALISER COMMENT CA SE PASSE NIVEAU COLLISION"""
 
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
