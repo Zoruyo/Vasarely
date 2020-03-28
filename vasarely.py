@@ -19,6 +19,30 @@ def movie(image_folder,video_name,slow_motion=1):
     
     cv2.destroyAllWindows()
     video.release()
+    
+def ordreSphere(listeSpheres):
+    listeSpheres2 = []
+    listeRayon = []
+    while listeSpheres != []:
+        radius = 0
+        for sph in listeSpheres:
+            if radius < sph.rayon:
+                radius = sph.rayon
+        for i in range(len(listeSpheres)):
+            if listeSpheres[i].rayon == radius:
+                listeSpheres2.append(listeSpheres[i])
+                listeRayon.append(listeSpheres[i].rayon)
+                del(listeSpheres[i])
+                break
+    print(listeRayon)
+    return listeSpheres2  
+
+def biggestradius(listeSpheres):
+    radius = 0
+    for sph in listeSpheres:
+        if radius < sph.rayon:
+            radius = sph.rayon     
+    return radius     
 
     
 class Point2d:
@@ -169,15 +193,8 @@ class Sphere:
         Y.y = 0
         Y.z = 0
         #on retourne la distance entre les 2 points X et Y
-        return X.dist(Y)
-    
-    def biggestradius(self,listeSpheres):
-        radius = 0
-        for sph in listeSpheres:
-            if radius < sph.rayon:
-                radius = sph.rayon
-        print(radius)        
-        return radius              
+        return X.dist(Y)             
+                    
                         
     '''https://svgwrite.readthedocs.io/en/latest/classes/path.html#svgwrite.path.Path  ''' 
     
@@ -229,6 +246,11 @@ class Grille:
                     w = Point3d(self.tab[i][j])
                     if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
                         t = sph.projPoint(self.tab[i][j])
+                        if sph.rayon == biggestradius(_listeSphere):
+                            s = sph   
+                            t = s.projPoint(self.tab[i][j]) #on projete le point2D sur chaque sphère
+                        else:
+                            t = sph.projPoint(self.tab[i][j])                        
                         #print("test:(",i,",",j,")=",isinstance(t,Point3d))
                         if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
                             if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
@@ -282,8 +304,8 @@ class Grille:
                         inc += 1
                         
         return tab_proj   '''
-
-        
+ 
+    '''        
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
         e = 20
@@ -330,6 +352,39 @@ class Grille:
         _svgDraw.add(_svgDraw.circle((235,355), 122+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
         _svgDraw.add(_svgDraw.circle((335,465), 82-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
         _svgDraw.add(_svgDraw.circle((335,465), 82+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        '''       
+
+"""J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
+DES CAS POUR VISUALISER COMMENT CA SE PASSE NIVEAU COLLISION"""
+
+    #on peut dessiner
+    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
+        e = 40
+        for i in range(self._nbColonnes-1):
+            for j in range(self._nbLignes-1):
+                P = tab_proj[i][j]
+                Q = tab_proj[i][j+1]
+                R = tab_proj[i+1][j]
+                if not P is None and not Q is None:
+                    """ 3 façons de tracer une ligne:
+                    1. fonction ligne
+                    2. fonction path avec commande ligne
+                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
+                    # 1.
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
+                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                if not P is None and not R is None:
+                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+        # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
+        _svgDraw.add(_svgDraw.circle((235,355), 122-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((235,355), 122+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((335,465), 82-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        _svgDraw.add(_svgDraw.circle((335,465), 82+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -370,13 +425,14 @@ class Dessin:
         #
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 115,115
+        start,end = 115,200
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
             listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
+            #listeSpheres = ordreSphere(listeSpheres)
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
