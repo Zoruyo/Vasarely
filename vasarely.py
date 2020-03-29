@@ -19,7 +19,7 @@ def movie(image_folder,video_name,slow_motion=1):
     
     cv2.destroyAllWindows()
     video.release()
-    
+
 def ordreSphere(listeSpheres):
     listeSpheres2 = []
     listeRayon = []
@@ -34,7 +34,7 @@ def ordreSphere(listeSpheres):
                 listeRayon.append(listeSpheres[i].rayon)
                 del(listeSpheres[i])
                 break
-    print(listeRayon)
+    #print(listeRayon)
     return listeSpheres2  
 
 def biggestradius(listeSpheres):
@@ -104,6 +104,12 @@ class Point3d(Point2d):
     def dist(self,_A):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
+    def inSpheres(self,_listeSphere):
+        listeSphere = []
+        for sph in _listeSphere:
+            if self.dist(sph.C) <= (sph.rayon+1) and self.dist(sph.C) <= (sph.rayon+1):
+                listeSphere.append(sph)
+        return listeSphere
 
     
 class Sphere:
@@ -236,30 +242,22 @@ class Grille:
     def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
-        WL = [] #Liste des W déjà modifiés
-        sph_tab = [] #Liste des points qui ont bien été projetés sur une sphère
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
-                W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
+                w = self.tab[i][j]
+                W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    w = Point3d(self.tab[i][j])
-                    if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
-                        t = sph.projPoint(self.tab[i][j])
-                        if sph.rayon == biggestradius(_listeSphere):
-                            s = sph   
-                            t = s.projPoint(self.tab[i][j]) #on projete le point2D sur chaque sphère
-                        else:
-                            t = sph.projPoint(self.tab[i][j])                        
+                    t = sph.projPoint(w)
+                    t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
+                    if t_listeSphere != [] and sph == ordreSphere(t_listeSphere)[0]: #on vérifie qu'on projette t sur la plus grande sphère
                         #print("test:(",i,",",j,")=",isinstance(t,Point3d))
                         if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-                            if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
+                            if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
                                 W = Point3d(t)
                             else:
                                 W = None
-                            #W.sphere = sph             
-                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z: #Si le point a bien été projeté, on l'ajoute à sph_tab
-                        sph_tab.append((w.x,w.y,w.z))
+                        #W.sphere = sph
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
@@ -348,10 +346,9 @@ class Grille:
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
-        _svgDraw.add(_svgDraw.circle((235,355), 122-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((235,355), 122+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((335,465), 82-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((335,465), 82+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+        for sph in listeSpheres:
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
         '''       
 
     """J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
@@ -381,10 +378,9 @@ class Grille:
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
-        _svgDraw.add(_svgDraw.circle((235,355), 122-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((235,355), 122+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((335,465), 82-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-        _svgDraw.add(_svgDraw.circle((335,465), 82+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+        for sph in listeSpheres:
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -425,7 +421,7 @@ class Dessin:
         #
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 115,200
+        start,end = 115,120
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
@@ -444,7 +440,8 @@ class Dessin:
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print("and converted\n")
         video_name = image_folder+sep+"vasarely.avi"
-        movie(image_folder,video_name,10)
+        slow_motion = 20
+        movie(image_folder,video_name,slow_motion)
         print(os.path.split(video_name)[1]," saved\n")
 
 
