@@ -107,7 +107,7 @@ class Point3d(Point2d):
     def inSpheres(self,_listeSphere):
         listeSphere = []
         for sph in _listeSphere:
-            if self.dist(sph.C) <= sph.rayon and self.dist(sph.C) <= sph.rayon+1:
+            if self.dist(sph.C) <= sph.rayon+10**(-2) and self.dist(sph.C) <= sph.rayon+10**(-2):
                 listeSphere.append(sph)
         return listeSphere
 
