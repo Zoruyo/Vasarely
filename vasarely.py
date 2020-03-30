@@ -429,9 +429,7 @@ class Dessin:
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
-            #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
             listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
-            #listeSpheres = ordreSphere(listeSpheres)
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
