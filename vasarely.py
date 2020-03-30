@@ -105,6 +105,7 @@ class Point3d(Point2d):
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
     def inSpheres(self,_listeSphere):
         biais = 10**(-2)
+        #biais = 0
         listeSphere = []
         for sph in _listeSphere:
             if self.dist(sph.C) <= sph.rayon+biais:
