@@ -251,14 +251,20 @@ class Grille:
                 for sph in _listeSphere:
                     t = sph.projPoint(w)
                     t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
-                    if t_listeSphere != [] and sph == ordreSphere(t_listeSphere)[0]: #on vérifie qu'on projette t sur la plus grande sphère
-                        #print("test:(",i,",",j,")=",isinstance(t,Point3d))
-                        if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-                            if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
-                                W = Point3d(t)
-                            else:
-                                W = None
-                        #W.sphere = sph
+                    if t_listeSphere != []:
+                        if sph == ordreSphere(t_listeSphere)[0]: #on vérifie qu'on projette t sur la plus grande sphère
+                            #print("test:(",i,",",j,")=",isinstance(t,Point3d))
+                            if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                                if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
+                                    W = Point3d(t)
+                                else:
+                                    W = None
+                            #W.sphere = sph
+                    """
+                    #en anticipation de bugs de lissage au niveau des collisions, cette liste de tuples nous sera sûrement utile...
+                    else:
+                        liste_t.append((t,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                    """
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
