@@ -104,9 +104,10 @@ class Point3d(Point2d):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
     def inSpheres(self,_listeSphere):
+        biais = 10**(-2)
         listeSphere = []
         for sph in _listeSphere:
-            if self.dist(sph.C) <= sph.rayon+10**(-2) and self.dist(sph.C) <= sph.rayon+10**(-2):
+            if self.dist(sph.C) <= sph.rayon+biais and self.dist(sph.C) <= sph.rayon+biais:
                 listeSphere.append(sph)
         return listeSphere
 
