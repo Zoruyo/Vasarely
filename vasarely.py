@@ -107,7 +107,7 @@ class Point3d(Point2d):
         biais = 10**(-2)
         listeSphere = []
         for sph in _listeSphere:
-            if self.dist(sph.C) <= sph.rayon+biais and self.dist(sph.C) <= sph.rayon+biais:
+            if self.dist(sph.C) <= sph.rayon+biais:
                 listeSphere.append(sph)
         return listeSphere
 
