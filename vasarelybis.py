@@ -254,13 +254,13 @@ class Grille:
                     if len(t_listeSphere) > 1:
                         bigSphere = ordreSphere(t_listeSphere)[0] #on projete par rapport à la plus grande sphère
                         t = bigSphere.projPoint(w)
-                        #print("test:(",i,",",j,")=",isinstance(t,Point3d))
-                        if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-                            if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
-                                W = Point3d(t)
-                            else:
-                                W = None
-                        #W.sphere = sph
+                    #print("test:(",i,",",j,")=",isinstance(t,Point3d))
+                    if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                        if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
+                            W = Point3d(t)
+                        else:
+                            W = None
+                    #W.sphere = sph
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
@@ -431,6 +431,7 @@ class Dessin:
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
+            #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
             listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = ordreSphere(listeSpheres)
             size_numbers = str(max(start,end))
