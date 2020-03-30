@@ -446,7 +446,6 @@ class Dessin:
         print(os.path.split(video_name)[1]," saved\n")
 
 
-
 d = Dessin()
 
 '''
