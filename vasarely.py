@@ -5,7 +5,6 @@ import os
 import cv2
 
 
-
 def movie(image_folder,video_name,slow_motion=1):    
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
@@ -377,10 +376,12 @@ class Grille:
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+        """
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+        """
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -417,11 +418,10 @@ class Dessin:
             for video in src:
                 if video.endswith(".avi"):
                     os.remove(image_folder+sep+video)
-
-        #
+        
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 115,120
+        start,end = 115,115
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
@@ -440,10 +440,9 @@ class Dessin:
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print("and converted\n")
         video_name = image_folder+sep+"vasarely.avi"
-        slow_motion = 20
+        slow_motion = 5
         movie(image_folder,video_name,slow_motion)
         print(os.path.split(video_name)[1]," saved\n")
-
 
 
 
