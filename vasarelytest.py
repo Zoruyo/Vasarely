@@ -1,10 +1,8 @@
-#import tkinter as tk
 import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
 import os
 import cv2
-
 
 
 def movie(image_folder,video_name,slow_motion=1):    
@@ -21,6 +19,30 @@ def movie(image_folder,video_name,slow_motion=1):
     cv2.destroyAllWindows()
     video.release()
 
+def ordreSphere(listeSpheres):
+    listeSpheres2 = []
+    listeRayon = []
+    while listeSpheres != []:
+        radius = 0
+        for sph in listeSpheres:
+            if radius < sph.rayon:
+                radius = sph.rayon
+        for i in range(len(listeSpheres)):
+            if listeSpheres[i].rayon == radius:
+                listeSpheres2.append(listeSpheres[i])
+                listeRayon.append(listeSpheres[i].rayon)
+                del(listeSpheres[i])
+                break    
+    #print(listeRayon)
+    return listeSpheres2  
+
+def biggestradius(listeSpheres):
+    radius = 0
+    for sph in listeSpheres:
+        if radius < sph.rayon:
+            radius = sph.rayon     
+    return radius     
+
     
 class Point2d:
     def __init__(self,_x=0,_y=0):
@@ -35,35 +57,35 @@ class Point2d:
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2)
 
-    
 class Point3d(Point2d):
     def __init__(self,_anotherPoint=None):
-        if _anotherPoint is None: #Si aucune coordonnée n'est définie: (0,0,0,0) par défaut
+        #Si aucune coordonnée n'est définie: (0,0,0,0) par défaut
+        if _anotherPoint is None:
             super().__init__()
             self.z = 0
             self.beta = 0
-        else: #Si un point 2D est défini:
+        #Si un point 2D est défini:
+        else:
             super().__init__(_anotherPoint.x,_anotherPoint.y) 
-            if isinstance(_anotherPoint,Point3d): #isinstance vérifie si _anotherPoint est une instance de point 3D)
-                self.z = _anotherPoint.z #On définit ces deux coordonnées en appel une fois les coordonnées x,y définies
+            #isinstance vérifie si _anotherPoint est une instance de Point3d
+            if isinstance(_anotherPoint,Point3d):
+                self.z = _anotherPoint.z
                 self.beta = _anotherPoint.beta
-            else: #Si z et beta ne sont pas définies, elles valent 0 par défaut
+            #Si z et beta ne sont pas définies, elles valent 0 par défaut
+            else:
                 self.z = 0
                 self.beta = 0
-        
     def __str__(self):
         return "("+str(self.x)+","+str(self.y)+","+str(self.z)+","+str(self.beta)+")"
-
     def norm(self):
         """calcule la norme du vecteur"""
         return math.sqrt(self.x**2+self.y**2+self.z**2)
-
     def rotZ(self):
         """rotation autour de l'axe z : retourne un nouveau point qui correspond
         à la projection du point sur l'axe x (beta contient l'angle)
         """
         np = Point3d()
-        np.x = math.sqrt(self.x**2+self.y**2) #Norme dans R^2
+        np.x = super().norm()
         np.y = 0
         np.z = 0
         if np.x!=0:
@@ -71,7 +93,6 @@ class Point3d(Point2d):
         if self.y<0:
             np.beta = -np.beta
         return np
-
     def arcRotZ(self,_beta = None):
         """rotation inverse autour de l'axe z"""
         t = self.x
@@ -79,12 +100,17 @@ class Point3d(Point2d):
             self.beta = _beta
         self.x = t*math.cos(self.beta)
         self.y = t*math.sin(self.beta)
-        # on ne change pas z
-        # self.z = 0;
-
     def dist(self,_A):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
+    def inSpheres(self,_listeSphere):
+        biais = 10**(-2)
+        #biais = 0
+        listeSphere = []
+        for sph in _listeSphere:
+            if self.dist(sph.C) <= sph.rayon+biais:
+                listeSphere.append(sph)
+        return listeSphere
 
     
 class Sphere:
@@ -115,34 +141,45 @@ class Sphere:
     def deformation(self,a,r,c,alpha):
             return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
 
-    def projPoint(self,_A):
+    def projPoint(self,_A,e):
         """calcule les coordonnées du point projeté selon le cone de revolution
            sur la surface de la sphere : A'
         """
         #print("Distance euclidienne entre A et C (projPoint):",_A.dist(self.C))
         #print("Rayon (projPoint):",self.rayon)
         if _A.dist(self.C)>self.rayon: #si la distance est + grande que le cercle, elle est inchangée
-            return Point3d(_A) 
+            return Point3d(_A)
         A = Point3d(_A) #On définit le pt en paramètre comme étant un nouveau point 3D (pour des manips)
         A.x -=  self.C.x  #on translate le point _A pour que le centre de la sphere soit en 0,0
         A.y -=  self.C.y
         A = A.rotZ()
-        a = A.x
+        a = A.x + e
         r = self.rayon
         c = self.C.dist(self.Cp)
         alpha = math.atan(a/c)
-        X = Point3d();
-        if a!= 0:
+        X = Point3d()
+        if a >= self.rayon: #Erreur de projection au delà du rayon: on retire epsilon à a
+            X.x = self.deformation(a-e,r,c,alpha) 
+            X.z = math.sqrt(r**2-X.x**2)
+        elif a >= self.rayon-e and a < self.rayon: #C'est à cet endroit qu'on peut à priori lisser la courbe de la sphère à ses bornes
             X.x = self.deformation(a,r,c,alpha)
             X.z = math.sqrt(r**2-X.x**2)
         else:
+            X.x = self.deformation(a,r,c,alpha) #On projette normalement si a est inférieur à r-e
+            X.z = math.sqrt(r**2-X.x**2)            
+        if a == e: #Correspond au sommet de la sphère
             X.x = 0
-            X.z = r
+            X.z = r    
         X.y = 0
         X.arcRotZ(A.beta)
         #on retranslate le point obtenu pour le remettre à la bonne place
         X.x += self.C.x
         X.y += self.C.y
+        '''X2D = Point3d(X)
+        if X.z == 0 and X2D.dist(self.C) <= self.rayon+e and X2D.dist(self.C) > self.rayon:
+            X.z += 15'''
+        '''if X2D.dist(self.C) >= self.rayon-e:
+            X.z -= 10  '''         
         return X
 
     def projDist(self,_A,_d):
@@ -156,7 +193,7 @@ class Sphere:
         r = self.rayon
         c = self.C.dist(self.Cp)
         alpha = math.atan(a/c)
-        X = Point3d();
+        X = Point3d()
         if a!= 0:
             X.x = self.deformation(a,r,c,alpha)
         else:
@@ -166,23 +203,16 @@ class Sphere:
         #deuxieme point
         a = A.x+_d
         alpha = math.atan(a/c)
-        Y = Point3d();
-        if a!= 0:
+        Y = Point3d()
+        if a!= 0:           
             Y.x = self.deformation(a,r,c,alpha)
         else:
             Y.x = 0
         Y.y = 0
         Y.z = 0
         #on retourne la distance entre les 2 points X et Y
-        return X.dist(Y)
-    
-    def biggestradius(self,listeSpheres):
-        radius = 0
-        for sph in listeSpheres:
-            if radius < sph.rayon:
-                radius = sph.rayon
-        print(radius)        
-        return radius              
+        return X.dist(Y)             
+                    
                         
     '''https://svgwrite.readthedocs.io/en/latest/classes/path.html#svgwrite.path.Path  ''' 
     
@@ -223,82 +253,143 @@ class Grille:
 
     def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
+        e = 15
         tab_proj = []
-        WL = [] #Liste des W déjà modifiés
-        sph_tab = [] #Liste des points qui ont bien été projetés sur une sphère
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
-                W = Point3d(self.tab[i][j]) #on définit un point3D à partir du Point2D de la liste tab
+                w = self.tab[i][j]
+                W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    w = Point3d(self.tab[i][j])
-                    if (w.x,w.y,w.z) not in sph_tab : #Vérifie si le point n'a pas déjà été projeté
-                        t = sph.projPoint(self.tab[i][j])
-                        #print("test:(",i,",",j,")=",isinstance(t,Point3d))
-                        if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-                            if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase: 
-                                W = Point3d(t)
-                            else:
-                                W = None
-                            #W.sphere = sph             
-                    if W is not None and w is not None and W.x != w.x and W.y != w.y and W.z != w.z: #Si le point a bien été projeté, on l'ajoute à sph_tab
-                        sph_tab.append((w.x,w.y,w.z))
+                    t = sph.projPoint(w,e)
+                    t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
+                    if t_listeSphere != []:
+                        if sph == ordreSphere(t_listeSphere)[0]: #on vérifie qu'on projette t sur la plus grande sphère
+                            #print("test:(",i,",",j,")=",isinstance(t,Point3d))
+                            if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                                if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
+                                    W = Point3d(t)
+                                else:
+                                    W = None
+                            #W.sphere = sph
+                    """
+                    #en anticipation de bugs de lissage au niveau des collisions, cette liste de tuples nous sera sûrement utile...
+                    else:
+                        liste_t.append((t,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                    """
                 tab_proj_col.append(W)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
         return tab_proj
     
-    def lissage(self,tab_proj,listeSpheres):
-        WL = [] #Liste des W déjà modifiés
-        for sph in listeSpheres:
-            inc = 0
-            e = math.ceil((1/4)*sph.rayon)
-            for i in range(len(tab_proj)):
-                for j in range(len(tab_proj[i])):
-                    W = Point3d(tab_proj[i][j])
-                    if W.dist(sph.C) <= sph.rayon+e and W.dist(sph.C) >= sph.rayon-e and W not in WL:
-                        #print(W.dist(sph.C)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
-                        if inc == 1:
-                            A = Point3d(W)
-                            print((A.x,A.y))    
-                        W.x -= sph.C.x #Pour que le centre de la sphère soit en (0,0)
-                        W.y -= sph.C.y
-                        W =  W.rotZ()
-                        a = W.x
-                        X = Point3d()
-                        X.x = math.exp(-a**2)*(sph.rayon-e)
-                        X.z = math.sqrt((sph.rayon)**2-X.x**2)
-                        if inc == 1:
-                            A = Point3d(X)
-                            print((W.x,W.y)) 
-                        X.y = 0
-                        X.arcRotZ(W.beta)
-                        X.x += sph.C.x 
-                        X.y += sph.C.y
-                        if inc == 1:
-                            A = Point3d(X)
-                            print((A.x,A.y)) 
-                        WL.append(X)
-                        tab_proj[i][j] = X
-                        if inc == 1:
-                            print(tab_proj[i][j],"\n") 
-                        inc += 1
-                        
-        return tab_proj   
+    '''def lissage(self,tab_proj,listeSpheres):
+            WL = [] #Liste des W déjà modifiés
+            for sph in listeSpheres:
+                e = 1/2
+                for i in range(len(tab_proj)):
+                    for j in range(len(tab_proj[i])):
+                        W = Point3d(tab_proj[i][j])
+                        W2D = Point3d(W)
+                        W2D.z = 0
+                        if W2D.dist(sph.C) <= sph.rayon+e and W2D.dist(sph.C) >= sph.rayon and W not in WL:
+                            WL.append(W)
+                            W.z += 20
+                            W.x -= sph.C.x #Pour que le centre de la sphère soit en (0,0)
+                            W.y -= sph.C.y
+                            W =  W.rotZ()
+                            a = W.x
+                            X = Point3d()
+                            if a != 0:
+                                X.x = a - 20
+                            X.arcRotZ(W.beta)
+                            X.x += sph.C.x 
+                            X.y += sph.C.y
+                            tab_proj[i][j] = X  
+                            tab_proj[i][j] = W
+                        else:
+                            WL.append(W)
+            return tab_proj   
+    '''
  
-        
+    '''        
     #on peut dessiner
-    def dessiner(self,tab_proj,_svgDraw):
+    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
+        e = 20
+        listeP = []
+        listeQ = [] #On conserve également les points Q et R pour pouvoir appliquer Bézier par la suite sur chaque couple (P,Q) de l'intervalle [R+e,R-e]
+        listeR = []
+        for i in range(self._nbColonnes-1):
+            for j in range(self._nbLignes-1):
+               P = tab_proj[i][j]
+               Q = tab_proj[i][j+1]
+               R = tab_proj[i+1][j]
+               for sph in listeSpheres:
+                   P0 = Point3d(P)
+                   P0.z = 0
+                   if P0.dist(sph.C) <= sph.rayon + e and P0.dist(sph.C) >= sph.rayon - e:
+                       listeP.append(P)
+                       listeQ.append(Q)
+                       listeR.append(R)
+               if not P is None and not Q is None and P not in listeP:
+                    """ 3 façons de tracer une ligne:
+                    1. fonction ligne
+                    2. fonction path avec commande ligne
+                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
+                    # 1.
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
+                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+               elif P in listeP:   
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier (à définir pour chaque couple (P,Q))
+               if not P is None and not R is None and P not in listeP:
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 100, 16, '%')))
+               elif P in listeP:
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))
+        # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
+        for sph in listeSpheres:
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+    '''       
+
+    """J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
+    DES CAS POUR VISUALISER COMMENT CA SE PASSE NIVEAU COLLISION"""
+
+    #on peut dessiner
+    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
                 P = tab_proj[i][j]
                 Q = tab_proj[i][j+1]
                 R = tab_proj[i+1][j]
                 if not P is None and not Q is None:
-                    _svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    """ 3 façons de tracer une ligne:
+                    1. fonction ligne
+                    2. fonction path avec commande ligne
+                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
+                    # 1.
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
+                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-        #2print(sph_tab)
+        """
+        # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
+        for sph in listeSpheres:
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
+            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+        """
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -316,7 +407,8 @@ class Dessin:
         #self.dessin.save()
         
         if os.getlogin() == "lebre":
-            image_folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            folder = "C:/Users/lebre/.spyder-py3/Projet S4"
+            image_folder = folder
             sep = '/'
             src = os.listdir(image_folder)
             for files in src:
@@ -330,15 +422,14 @@ class Dessin:
             for files in src:
                 if files.endswith(".svg") or files.endswith(".png"):
                     os.remove(image_folder+sep+files)
-            src = os.listdir(folder)
+            src = os.listdir(image_folder)
             for video in src:
                 if video.endswith(".avi"):
-                    os.remove(folder+sep+video)
-
-        #
+                    os.remove(image_folder+sep+video)
+        
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 115,115
+        start,end = 70,70
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
@@ -349,17 +440,16 @@ class Dessin:
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
             tab_proj = self.grille.dessineCarres(listeSpheres)
-            tab_proj = self.grille.lissage(tab_proj,listeSpheres)
-            self.grille.dessiner(tab_proj,self.dessin)
+            #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
+            self.grille.dessiner(tab_proj,self.dessin,listeSpheres)
             self.dessin.save()
             print(os.path.split(file_name)[1]," saved",end=' ')
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print("and converted\n")
-        video_name = "vasarely.avi"
-        movie(image_folder,video_name,10)
-        print(video_name," saved\n")
-
-
+        video_name = image_folder+sep+"vasarely.avi"
+        slow_motion = 5
+        movie(image_folder,video_name,slow_motion)
+        print(os.path.split(video_name)[1]," saved\n")
 
 
 d = Dessin()
