@@ -2,6 +2,7 @@ import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
 import os
+import random
 import cv2
 
 
@@ -43,6 +44,10 @@ def biggestradius(listeSpheres):
             radius = sph.rayon     
     return radius     
 
+def randomcolor():
+    colors = ["red","green","blue"]
+    color = random.choice(colors)
+    return color
     
 class Point2d:
     def __init__(self,_x=0,_y=0):
@@ -162,11 +167,11 @@ class Sphere:
             X.x = self.deformation(a-e,r,c,alpha) 
             X.z = math.sqrt(r**2-X.x**2)
         elif a >= self.rayon-e and a < self.rayon: #C'est à cet endroit qu'on peut à priori lisser la courbe de la sphère à ses bornes
-            X.x = self.deformation(a,r,c,alpha)
+            X.x = self.deformation(a-e,r,c,alpha)
             X.z = math.sqrt(r**2-X.x**2)
         else:
-            X.x = self.deformation(a,r,c,alpha) #On projette normalement si a est inférieur à r-e
-            X.z = math.sqrt(r**2-X.x**2)            
+            X.x = self.deformation(a,r,c,alpha) #On projette normalement si a est inférieur à r-e: on rajoute episilon pour assurer la continuité aux bornes des intervalles
+            X.z = math.sqrt(r**2-X.x**2)          
         if a == e: #Correspond au sommet de la sphère
             X.x = 0
             X.z = r    
@@ -234,7 +239,7 @@ class Grille:
     def __str__(self):
         return str(self.tab)
 
-    """    def dessineCercles(self,_svgDraw,_sphere):
+    def dessineCercles(self,_svgDraw,_sphere):
         for col in self.tab:
             for case in col:
                 print(case)
@@ -249,7 +254,7 @@ class Grille:
                 #on decale pour ne pas avoir de coordonnées negatives
                 xt = (self._largeur//2+2)*self.tailleCase+X.x
                 yt = (self._hauteur//2+2)*self.tailleCase+X.y
-                _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red")) """
+                _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red"))
 
     def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
@@ -366,9 +371,18 @@ class Grille:
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
+                color1 = randomcolor()
+                color2 = randomcolor()
+                while color2 == color1:
+                    color2 = randomcolor()
                 P = tab_proj[i][j]
                 Q = tab_proj[i][j+1]
                 R = tab_proj[i+1][j]
+                c = P.dist(Q)
+                C = Point3d()
+                C.x = (Q.x+R.x)/2
+                C.y = (Q.y+R.y)/2
+                C.z = (Q.z+R.z)/2    
                 if not P is None and not Q is None:
                     """ 3 façons de tracer une ligne:
                     1. fonction ligne
@@ -384,6 +398,12 @@ class Grille:
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+                if C.z == 0:    
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))                 
+    
+    
+    
         """
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
