@@ -252,8 +252,8 @@ class Grille:
                     t = sph.projPoint(w)
                     t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
                     if len(t_listeSphere) > 1:
-                        bigSphere = ordreSphere(t_listeSphere)[0] #on projete par rapport à la plus grande sphère
-                        t = bigSphere.projPoint(w)
+                        biggestSphere = ordreSphere(t_listeSphere)[0] #on projete par rapport à la plus grande sphère
+                        t = biggestSphere.projPoint(w)
                     #print("test:(",i,",",j,")=",isinstance(t,Point3d))
                     if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
                         if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
@@ -524,3 +524,45 @@ S = Sphere()
 X = S.proj(A0)
 print(X)
 """
+
+
+
+def PointValide(self,_t,grille):
+        if self is None or _t.z > self.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+            if _t.x>=0 and _t.y>=0 and _t.x<grille._nbColonnes*grille.tailleCase and _t.y<grille._nbLignes*grille.tailleCase:
+                self = Point3d(_t)
+            else:
+                self = None
+
+
+                        else:
+                                W_t_listeSphere = W.inSpheres(t_listeSphere)
+                            if W not in [x[0] for x in liste_t] and W_t_listeSphere != t_listeSphere:
+                                liste_t.append((W,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                                Wp = biggestSphere.projPoint(t)
+                                if Wp.inSpheres(t_listeSphere) == t_listeSphere:
+                                    W = Wp
+
+for sph in _listeSphere:
+                    t = sph.projPoint(w)
+                    t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
+                    if len(t_listeSphere) >= 1:
+                        biggestSphere = ordreSphere(t_listeSphere)[0]
+                        if sph == biggestSphere: #on vérifie qu'on projette t sur la plus grande sphère
+                            W = W.PointValide(t,self)
+                            if t_listeSphere != [sph]:
+                                secBiggestSphere = ordreSphere(t_listeSphere)[1]
+                                W_t_listeSphere = W.inSpheres(t_listeSphere)
+                                if W_t_listeSphere != t_listeSphere[1:]:
+                                    #liste_t.append((W,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                                    Wp = ordreSphere(t_listeSphere)[1].projPoint(t)
+                                    if Wp.inSpheres(t_listeSphere) == t_listeSphere:
+                                        W = W.PointValide(Wp,self)
+                        else:
+                            W_t_listeSphere = W.inSpheres(t_listeSphere)
+                            if W_t_listeSphere != t_listeSphere:
+                                #liste_t.append((W,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                                Wp = biggestSphere.projPoint(t)
+                                if Wp.inSpheres(t_listeSphere) == t_listeSphere:
+                                    W = W.PointValide(Wp,self)
+                tab_proj_col.append(W)

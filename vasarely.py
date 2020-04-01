@@ -20,6 +20,7 @@ def movie(image_folder,video_name,slow_motion=1):
     video.release()
 
 def ordreSphere(listeSpheres):
+    listeSpheres = list(listeSpheres)
     listeSpheres2 = []
     listeRayon = []
     while listeSpheres != []:
@@ -27,14 +28,14 @@ def ordreSphere(listeSpheres):
         for sph in listeSpheres:
             if radius < sph.rayon:
                 radius = sph.rayon
-        for i in range(len(listeSpheres)):
-            if listeSpheres[i].rayon == radius:
-                listeSpheres2.append(listeSpheres[i])
-                listeRayon.append(listeSpheres[i].rayon)
-                del(listeSpheres[i])
+        for sph in listeSpheres:
+            if sph.rayon == radius:
+                listeSpheres2.append(sph)
+                listeRayon.append(sph.rayon)
+                listeSpheres.remove(sph)
                 break
     #print(listeRayon)
-    return listeSpheres2  
+    return listeSpheres2
 
 def biggestradius(listeSpheres):
     radius = 0
@@ -43,6 +44,17 @@ def biggestradius(listeSpheres):
             radius = sph.rayon     
     return radius     
 
+def permutTab(tab_proj_col, W):
+    tab_proj_col2 = []
+    while len(tab_proj_col) > 1 and str(tab_proj_col[0]) != str(W):
+        #Tableau [<__main__.Point3d object at 0x0000015144574880>]
+        #Point   ['<__main__.Point3d object at 0x0000015144516D30>']
+        for X in tab_proj_col:
+            if X != W:
+                tab_proj_col2.append(X)
+                tab_proj_col.remove(X)
+                break
+    return(tab_proj_col2)
     
 class Point2d:
     def __init__(self,_x=0,_y=0):
@@ -111,6 +123,12 @@ class Point3d(Point2d):
             if self.dist(sph.C) <= sph.rayon+biais:
                 listeSphere.append(sph)
         return listeSphere
+    def PointValide(self,_t,grille):
+        if self is None or _t.z > self.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+            if _t.x>=0 and _t.y>=0 and _t.x<grille._nbColonnes*grille.tailleCase and _t.y<grille._nbLignes*grille.tailleCase:
+                return Point3d(_t)
+            else:
+                return None
 
     
 class Sphere:
@@ -246,26 +264,34 @@ class Grille:
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
+                liste_t = []
                 w = self.tab[i][j]
                 W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
                     t = sph.projPoint(w)
                     t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
-                    if t_listeSphere != []:
-                        if sph == ordreSphere(t_listeSphere)[0]: #on vérifie qu'on projette t sur la plus grande sphère
-                            #print("test:(",i,",",j,")=",isinstance(t,Point3d))
-                            if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-                                if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
-                                    W = Point3d(t)
-                                else:
-                                    W = None
+                    if len(t_listeSphere) >= 1:
+                        biggestSphere = ordreSphere(t_listeSphere)[0]
+                        if sph == biggestSphere: #on vérifie qu'on projette t sur la plus grande sphère
+                            W = W.PointValide(t,self)
                             #W.sphere = sph
-                    """
-                    #en anticipation de bugs de lissage au niveau des collisions, cette liste de tuples nous sera sûrement utile...
-                    else:
-                        liste_t.append((t,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
-                    """
+                        else:
+                            W_t_listeSphere = W.inSpheres(t_listeSphere)
+                            if W not in [x[0] for x in liste_t] and W_t_listeSphere != t_listeSphere:
+                                liste_t.append((W,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                                Wp = biggestSphere.projPoint(t)
+                                if Wp.inSpheres(t_listeSphere) == t_listeSphere:
+                                    W = W.PointValide(Wp,self)
                 tab_proj_col.append(W)
+                #liste_t_W = [x[0] for x in liste_t]
+                #if liste_t_W != []:
+                #    for x in liste_t_W:
+                #        print(x)
+                #for W in liste_t_W:
+                #    tab_proj_col = permutTab(tab_proj_col, W)
+                #    Wb = Point3d(Point2d(i*self.tailleCase,(self._nbLignes-1)*self.tailleCase)) #TROUVER Wb
+                #    W = biggestSphere.projPoint(w)
+                #    tab_proj_col.append(Wb)
                 #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
         return tab_proj
@@ -429,9 +455,10 @@ class Dessin:
         
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 115,115
+        start,end = 150,150
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
+            print(round(((i-start)/(end-start+1)*100),1),'%')
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
@@ -443,13 +470,14 @@ class Dessin:
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin,listeSpheres)
             self.dessin.save()
-            print(os.path.split(file_name)[1]," saved",end=' ')
+            print('\t',os.path.split(file_name)[1]," saved")
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
-            print("and converted\n")
+            print('\t',"and converted\n")
+        print("100 %\n")
         video_name = image_folder+sep+"vasarely.avi"
         slow_motion = 5
         movie(image_folder,video_name,slow_motion)
-        print(os.path.split(video_name)[1]," saved\n")
+        print('\t',os.path.split(video_name)[1],"saved\n")
 
 
 d = Dessin()

@@ -50,14 +50,11 @@ class Point3d(Point2d):
             else: #Si z et beta ne sont pas définies, elles valent 0 par défaut
                 self.z = 0
                 self.beta = 0
-        
     def __str__(self):
         return "("+str(self.x)+","+str(self.y)+","+str(self.z)+","+str(self.beta)+")"
-
     def norm(self):
         """calcule la norme du vecteur"""
         return math.sqrt(self.x**2+self.y**2+self.z**2)
-
     def rotZ(self):
         """rotation autour de l'axe z : retourne un nouveau point qui correspond
         à la projection du point sur l'axe x (beta contient l'angle)
@@ -71,7 +68,6 @@ class Point3d(Point2d):
         if self.y<0:
             np.beta = -np.beta
         return np
-
     def arcRotZ(self,_beta = None):
         """rotation inverse autour de l'axe z"""
         t = self.x
@@ -81,10 +77,15 @@ class Point3d(Point2d):
         self.y = t*math.sin(self.beta)
         # on ne change pas z
         # self.z = 0;
-
     def dist(self,_A):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
+    def PointValide(self,_t,grille):
+        if self is None or _t.z > self.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+            if _t.x>=0 and _t.y>=0 and _t.x<grille._nbColonnes*grille.tailleCase and _t.y<grille._nbLignes*grille.tailleCase:
+                return Point3d(_t)
+            else:
+                return None
 
     
 class Sphere:
