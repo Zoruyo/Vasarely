@@ -123,12 +123,6 @@ class Point3d(Point2d):
             if self.dist(sph.C) <= sph.rayon+biais:
                 listeSphere.append(sph)
         return listeSphere
-    def PointValide(self,_t,grille):
-        if self is None or _t.z > self.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
-            if _t.x>=0 and _t.y>=0 and _t.x<grille._nbColonnes*grille.tailleCase and _t.y<grille._nbLignes*grille.tailleCase:
-                return Point3d(_t)
-            else:
-                return None
 
     
 class Sphere:
@@ -272,13 +266,21 @@ class Grille:
                     if len(t_listeSphere) >= 1:
                         biggestSphere = ordreSphere(t_listeSphere)[0]
                         if sph == biggestSphere: #on vérifie qu'on projette t sur la plus grande sphère
-                            W = W.PointValide(t,self) #on vérifie que le point sera dans la grille
+                            if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                                if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
+                                    W = Point3d(t)
+                                else:
+                                    W = None
                         else:
                             W_t_listeSphere = W.inSpheres(t_listeSphere)
                             if W_t_listeSphere != t_listeSphere: #si le point projeté est dans un ensemble différent de sphère
                                 Wp = biggestSphere.projPoint(t)
                                 if Wp.inSpheres(t_listeSphere) == t_listeSphere: #on projette à nouveau le point pour qu'il colle à la plus grande
-                                    W = W.PointValide(Wp,self)
+                                    if W is None or Wp.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                                        if Wp.x>=0 and Wp.y>=0 and Wp.x<self._nbColonnes*self.tailleCase and Wp.y<self._nbLignes*self.tailleCase:
+                                            W = Point3d(Wp)
+                                        else:
+                                            W = None
                 tab_proj_col.append(W)
             tab_proj.append(tab_proj_col)
         return tab_proj
@@ -442,7 +444,7 @@ class Dessin:
         
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 150,150
+        start,end = 85,191
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             print(round(((i-start)/(end-start+1)*100),1),'%')
