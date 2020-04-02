@@ -2,6 +2,7 @@ import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
 import os
+import random
 import cv2
 
 
@@ -42,7 +43,12 @@ def biggestradius(listeSpheres):
     for sph in listeSpheres:
         if radius < sph.rayon:
             radius = sph.rayon     
-    return radius     
+    return radius  
+
+def randomcolor():
+    colors = ["red","green","blue"]
+    color = random.choice(colors)
+    return color   
 
 def permutTab(tab_proj_col, W):
     tab_proj_col2 = []
@@ -153,34 +159,45 @@ class Sphere:
     def deformation(self,a,r,c,alpha):
             return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
 
-    def projPoint(self,_A):
+    def projPoint(self,_A,e):
         """calcule les coordonnées du point projeté selon le cone de revolution
            sur la surface de la sphere : A'
         """
         #print("Distance euclidienne entre A et C (projPoint):",_A.dist(self.C))
         #print("Rayon (projPoint):",self.rayon)
         if _A.dist(self.C)>self.rayon: #si la distance est + grande que le cercle, elle est inchangée
-            return Point3d(_A) 
+            return Point3d(_A)
         A = Point3d(_A) #On définit le pt en paramètre comme étant un nouveau point 3D (pour des manips)
         A.x -=  self.C.x  #on translate le point _A pour que le centre de la sphere soit en 0,0
         A.y -=  self.C.y
         A = A.rotZ()
-        a = A.x
+        a = A.x + e
         r = self.rayon
         c = self.C.dist(self.Cp)
         alpha = math.atan(a/c)
         X = Point3d()
-        if a!= 0:
-            X.x = self.deformation(a,r,c,alpha)
+        if a >= self.rayon: #Erreur de projection au delà du rayon: on retire epsilon à a
+            X.x = self.deformation(a-e,r,c,alpha) 
+            X.z = math.sqrt(r**2-X.x**2)
+        elif a >= self.rayon-e and a < self.rayon: #C'est à cet endroit qu'on peut à priori lisser la courbe de la sphère à ses bornes
+            X.x = self.deformation(a-e,r,c,alpha)
             X.z = math.sqrt(r**2-X.x**2)
         else:
+            X.x = self.deformation(a,r,c,alpha) #On projette normalement si a est inférieur à r-e: on rajoute episilon pour assurer la continuité aux bornes des intervalles
+            X.z = math.sqrt(r**2-X.x**2)          
+        if a == e: #Correspond au sommet de la sphère
             X.x = 0
-            X.z = r
+            X.z = r    
         X.y = 0
         X.arcRotZ(A.beta)
         #on retranslate le point obtenu pour le remettre à la bonne place
         X.x += self.C.x
         X.y += self.C.y
+        '''X2D = Point3d(X)
+        if X.z == 0 and X2D.dist(self.C) <= self.rayon+e and X2D.dist(self.C) > self.rayon:
+            X.z += 15'''
+        '''if X2D.dist(self.C) >= self.rayon-e:
+            X.z -= 10  '''         
         return X
 
     def projDist(self,_A,_d):
@@ -254,6 +271,7 @@ class Grille:
 
     def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
+        e = 15
         tab_proj = []
         for i in range(self._nbColonnes):
             tab_proj_col = []
@@ -261,7 +279,7 @@ class Grille:
                 w = self.tab[i][j]
                 W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    t = sph.projPoint(w)
+                    t = sph.projPoint(w,e)
                     t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
                     if len(t_listeSphere) >= 1:
                         biggestSphere = ordreSphere(t_listeSphere)[0]
@@ -274,7 +292,7 @@ class Grille:
                         else:
                             W_t_listeSphere = W.inSpheres(t_listeSphere)
                             if W_t_listeSphere != t_listeSphere: #si le point projeté est dans un ensemble différent de sphère
-                                Wp = biggestSphere.projPoint(t)
+                                Wp = biggestSphere.projPoint(t,e)
                                 if Wp.inSpheres(t_listeSphere) == t_listeSphere: #on projette à nouveau le point pour qu'il colle à la plus grande
                                     if W is None or Wp.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
                                         if Wp.x>=0 and Wp.y>=0 and Wp.x<self._nbColonnes*self.tailleCase and Wp.y<self._nbLignes*self.tailleCase:
@@ -378,12 +396,20 @@ class Grille:
 
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
-        e = 40
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
+                color1 = randomcolor()
+                color2 = randomcolor()
+                while color2 == color1:
+                    color2 = randomcolor()
                 P = tab_proj[i][j]
                 Q = tab_proj[i][j+1]
                 R = tab_proj[i+1][j]
+                c = P.dist(Q)
+                C = Point3d()
+                C.x = (Q.x+R.x)/2
+                C.y = (Q.y+R.y)/2
+                C.z = (Q.z+R.z)/2    
                 if not P is None and not Q is None:
                     """ 3 façons de tracer une ligne:
                     1. fonction ligne
@@ -399,6 +425,10 @@ class Grille:
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
                     _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+                if C.z == 0:    
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
+    
         """
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
@@ -444,7 +474,7 @@ class Dessin:
         
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 85,191
+        start,end = 85,90
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             print(round(((i-start)/(end-start+1)*100),1),'%')
