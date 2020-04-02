@@ -264,7 +264,6 @@ class Grille:
         for i in range(self._nbColonnes):
             tab_proj_col = []
             for j in range(self._nbLignes):
-                liste_t = []
                 w = self.tab[i][j]
                 W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
@@ -273,26 +272,14 @@ class Grille:
                     if len(t_listeSphere) >= 1:
                         biggestSphere = ordreSphere(t_listeSphere)[0]
                         if sph == biggestSphere: #on vérifie qu'on projette t sur la plus grande sphère
-                            W = W.PointValide(t,self)
-                            #W.sphere = sph
+                            W = W.PointValide(t,self) #on vérifie que le point sera dans la grille
                         else:
                             W_t_listeSphere = W.inSpheres(t_listeSphere)
-                            if W not in [x[0] for x in liste_t] and W_t_listeSphere != t_listeSphere:
-                                liste_t.append((W,sph)) #on recense tous les points non projetés qui appartiennent pourtant à une sphère
+                            if W_t_listeSphere != t_listeSphere: #si le point projeté est dans un ensemble différent de sphère
                                 Wp = biggestSphere.projPoint(t)
-                                if Wp.inSpheres(t_listeSphere) == t_listeSphere:
+                                if Wp.inSpheres(t_listeSphere) == t_listeSphere: #on projette à nouveau le point pour qu'il colle à la plus grande
                                     W = W.PointValide(Wp,self)
                 tab_proj_col.append(W)
-                #liste_t_W = [x[0] for x in liste_t]
-                #if liste_t_W != []:
-                #    for x in liste_t_W:
-                #        print(x)
-                #for W in liste_t_W:
-                #    tab_proj_col = permutTab(tab_proj_col, W)
-                #    Wb = Point3d(Point2d(i*self.tailleCase,(self._nbLignes-1)*self.tailleCase)) #TROUVER Wb
-                #    W = biggestSphere.projPoint(w)
-                #    tab_proj_col.append(Wb)
-                #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
             tab_proj.append(tab_proj_col)
         return tab_proj
     
