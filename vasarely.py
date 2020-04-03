@@ -176,15 +176,12 @@ class Sphere:
         c = self.C.dist(self.Cp)
         alpha = math.atan(a/c)
         X = Point3d()
-        if a >= self.rayon: #Erreur de projection au delà du rayon: on retire epsilon à a
-            X.x = self.deformation(a-e,r,c,alpha) 
-            X.z = math.sqrt(r**2-X.x**2)
-        elif a >= self.rayon-e and a < self.rayon: #C'est à cet endroit qu'on peut à priori lisser la courbe de la sphère à ses bornes
+        if a >= r: #Erreur de projection au delà du rayon: on retire epsilon à a
             X.x = self.deformation(a-e,r,c,alpha)
-            X.z = math.sqrt(r**2-X.x**2)
-        else:
-            X.x = self.deformation(a,r,c,alpha) #On projette normalement si a est inférieur à r-e: on rajoute episilon pour assurer la continuité aux bornes des intervalles
-            X.z = math.sqrt(r**2-X.x**2)          
+            X.z = math.sqrt(r**2-(X.x)**2)
+        elif (a < r and a != e): #On "pousse" les points du centre de la sphère en ajoutant epsilon, ce qui crée l'effet loupe, on les décale d'une longueur de "epsilon"
+            X.x = self.deformation(a-e,r,c,alpha) 
+            X.z = math.sqrt(r**2-X.x**2)  
         if a == e: #Correspond au sommet de la sphère
             X.x = 0
             X.z = r    
@@ -193,11 +190,6 @@ class Sphere:
         #on retranslate le point obtenu pour le remettre à la bonne place
         X.x += self.C.x
         X.y += self.C.y
-        '''X2D = Point3d(X)
-        if X.z == 0 and X2D.dist(self.C) <= self.rayon+e and X2D.dist(self.C) > self.rayon:
-            X.z += 15'''
-        '''if X2D.dist(self.C) >= self.rayon-e:
-            X.z -= 10  '''         
         return X
 
     def projDist(self,_A,_d):
@@ -252,23 +244,6 @@ class Grille:
     def __str__(self):
         return str(self.tab)
 
-    """    def dessineCercles(self,_svgDraw,_sphere):
-        for col in self.tab:
-            for case in col:
-                print(case)
-                A0 = Point3d()
-                A0.x = case[0]
-                A0.y = case[1]
-                A0.z = 0
-                print(A0)
-                X = _sphere.projPoint(A0)
-                print(X)
-                rayon = _sphere.projDist(A0,self.tailleCase//2)
-                #on decale pour ne pas avoir de coordonnées negatives
-                xt = (self._largeur//2+2)*self.tailleCase+X.x
-                yt = (self._hauteur//2+2)*self.tailleCase+X.y
-                _svgDraw.add(_svgDraw.ellipse(center=(xt, yt), r=(rayon, rayon),fill="none", stroke="red")) """
-
     def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         e = 15
@@ -302,48 +277,8 @@ class Grille:
                 tab_proj_col.append(W)
             tab_proj.append(tab_proj_col)
         return tab_proj
-    
-    ''' def lissage(self,tab_proj,listeSpheres):
-        WL = [] #Liste des W déjà modifiés
-        for sph in listeSpheres:
-            inc = 0
-            e = math.ceil((1/4)*sph.rayon)
-            for i in range(len(tab_proj)):
-                for j in range(len(tab_proj[i])):
-                    W = Point3d(tab_proj[i][j])
-                    W0 = Point3d(W)
-                    W.z = 0
-                    if W0.dist(sph.C) <= sph.rayon+e and W0.dist(sph.C) >= sph.rayon-e and W not in WL:
-                        #print(W.dist(sph.C)) #Si ce print s'affiche dans la console, alors il se passe des choses à cette distance du centre de la sphère
-                        if inc == 1:
-                            A = Point3d(W)
-                            print((A.x,A.y))    
-                        W.x -= sph.C.x #Pour que le centre de la sphère soit en (0,0)
-                        W.y -= sph.C.y
-                        W =  W.rotZ()
-                        a = W.x
-                        X = Point3d()
-                        X.x = math.exp(-a**2)*(sph.rayon-e)
-                        X.z = math.sqrt((sph.rayon)**2-X.x**2)
-                        if inc == 1:
-                            A = Point3d(X)
-                            print((W.x,W.y)) 
-                        X.y = 0
-                        X.arcRotZ(W.beta)
-                        X.x += sph.C.x 
-                        X.y += sph.C.y
-                        if inc == 1:
-                            A = Point3d(X)
-                            print((A.x,A.y)) 
-                        WL.append(X)
-                        tab_proj[i][j] = X
-                        if inc == 1:
-                            print(tab_proj[i][j],"\n") 
-                        inc += 1
-                        
-        return tab_proj   '''
  
-    '''        
+      
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
         e = 20
@@ -352,9 +287,18 @@ class Grille:
         listeR = []
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
+               color1 = randomcolor()
+               color2 = randomcolor()
+               while color2 == color1:
+                  color2 = randomcolor()
                P = tab_proj[i][j]
                Q = tab_proj[i][j+1]
                R = tab_proj[i+1][j]
+               c = P.dist(Q)
+               C = Point3d()
+               C.x = (Q.x+R.x)/2
+               C.y = (Q.y+R.y)/2
+               C.z = (Q.z+R.z)/2                   
                for sph in listeSpheres:
                    P0 = Point3d(P)
                    P0.z = 0
@@ -385,15 +329,19 @@ class Grille:
                elif P in listeP:
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))
+               if C.z == 0:    
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))            
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
-        '''       
+      
 
     """J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
     DES CAS POUR VISUALISER COMMENT CA SE PASSE NIVEAU COLLISION"""
 
+    '''
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
         for i in range(self._nbColonnes-1):
@@ -424,17 +372,14 @@ class Grille:
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
                 if not P is None and not R is None:
-                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-                if C.z == 0:    
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
-    
-        """
+                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%'))
+
+
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
-        """
+'''
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -474,7 +419,7 @@ class Dessin:
         
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
-        start,end = 85,90
+        start,end = 85,85
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             print(round(((i-start)/(end-start+1)*100),1),'%')
