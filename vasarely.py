@@ -294,6 +294,7 @@ class Grille:
                P = tab_proj[i][j]
                Q = tab_proj[i][j+1]
                R = tab_proj[i+1][j]
+               S = tab_proj[i+1][j+1]
                c = P.dist(Q)
                C = Point3d()
                C.x = (Q.x+R.x)/2
@@ -331,7 +332,13 @@ class Grille:
                     _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))
                if C.z == 0:    
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))            
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))   
+               else:
+                   '''P.z -= P.z
+                   Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
+                   R.z -= R.z
+                   S.z -= S.z
+                   print([P.dist(Q)+R.dist(S),P.dist(R)+Q.dist(S)])'''
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
