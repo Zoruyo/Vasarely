@@ -3,6 +3,7 @@ import svgwrite as svgwrite
 import cairosvg as cairosvg
 import os
 import cv2
+import time
 
 
 def movie(image_folder,video_name,slow_motion=1):    
@@ -173,7 +174,7 @@ class Sphere:
         if a >= r: #Erreur de projection au delà du rayon: on retire epsilon à a
             X.x = self.deformation(a-e,r,c,alpha)
             X.z = math.sqrt(r**2-(X.x)**2)
-        elif (a < r and a != e): #On "pousse" les points du centre de la sphère en ajoutant epsilon, ce qui crée l'effet loupe, on les décale d'une longueur de "epsilon"
+        elif (a < r and a != e): 
             X.x = self.deformation(a-e,r,c,alpha) 
             X.z = math.sqrt(r**2-X.x**2)  
         if a == e: #Correspond au sommet de la sphère
@@ -495,8 +496,11 @@ class Dessin:
         movie(image_folder,video_name,slow_motion)
         print('\t',os.path.split(video_name)[1],"saved\n")
 
-
+tps_debut = time.time()
 d = Dessin()
+tps_fin = time.time()
+tps = tps_fin-tps_debut
+print(tps)
 
 '''
 p3 = Point2d(2,3)
