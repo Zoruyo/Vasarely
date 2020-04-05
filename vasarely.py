@@ -2,7 +2,6 @@ import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
 import os
-import random
 import cv2
 
 
@@ -44,11 +43,6 @@ def biggestradius(listeSpheres):
         if radius < sph.rayon:
             radius = sph.rayon     
     return radius  
-
-def randomcolor():
-    colors = ["red","green","blue"]
-    color = random.choice(colors)
-    return color   
 
 def permutTab(tab_proj_col, W):
     tab_proj_col2 = []
@@ -287,10 +281,9 @@ class Grille:
         listeR = []
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
-               color1 = randomcolor()
-               color2 = randomcolor()
-               while color2 == color1:
-                  color2 = randomcolor()
+               color1 = "red"
+               color2 = "green"
+               color3 = "blue"
                P = tab_proj[i][j]
                Q = tab_proj[i][j+1]
                R = tab_proj[i+1][j]
@@ -307,7 +300,7 @@ class Grille:
                        listeP.append(P)
                        listeQ.append(Q)
                        listeR.append(R)
-               if not P is None and not Q is None and P not in listeP:
+               '''if not P is None and not Q is None and P not in listeP:
                     """ 3 façons de tracer une ligne:
                     1. fonction ligne
                     2. fonction path avec commande ligne
@@ -329,16 +322,67 @@ class Grille:
                     _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 100, 16, '%')))
                elif P in listeP:
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))
-               if C.z == 0:    
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
+                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))'''
+                    
+               if not P is None and not Q is None and not R is None and not S is None: #and P not in listeP: condition pour le lissage   
+                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%')))
+               #else: condition pour le lissage, à remplir ultérieurement   
+               if C.z == 0:  
+                   if (P.x <= self._nbColonnes/2*self.tailleCase and P.y >= self._nbLignes/2*self.tailleCase) or (P.x >= self._nbColonnes/2*self.tailleCase and P.y <= self._nbLignes/2*self.tailleCase):
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color3, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))   
+                   else:
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
+                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))                          
                else:
                    '''P.z -= P.z
                    Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
                    R.z -= R.z
                    S.z -= S.z
                    print([P.dist(Q)+R.dist(S),P.dist(R)+Q.dist(S)])'''
+                   
+                   '''Définition des milieux des arêtes'''
+                   
+                   PQM = Point3d() 
+                   PRM = Point3d()
+                   RSM = Point3d()
+                   QSM = Point3d()
+                   PRM.x = (P.x+R.x)/2
+                   PRM.y = (P.y+R.y)/2
+                   PRM.z = (P.z+R.z)/2                   
+                   PQM.x = (P.x+Q.x)/2
+                   PQM.y = (P.y+Q.y)/2
+                   PQM.z = (P.z+Q.z)/2 
+                   QSM.x = (Q.x+S.x)/2
+                   QSM.y = (Q.y+S.y)/2
+                   QSM.z = (Q.z+S.z)/2                   
+                   RSM.x = (R.x+S.x)/2
+                   RSM.y = (R.y+S.y)/2                   
+                   RSM.z = (R.z+S.z)/2 
+                   
+                   '''Premier cercle'''
+                   
+                   _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y),(PQM.x,PQM.y),(QSM.x,QSM.y),(RSM.x,RSM.y)), fill=color3,stroke = color3,stroke_width=0))
+                   quad_path = "M "+str(PRM.x)+' '+str(PRM.y)+" q "+str(P.x-PRM.x)+' '+str(P.y-PRM.y)+' '+str(PQM.x-PRM.x)+' '+str(PQM.y-PRM.y) #Courbes de Bézier dans le quadrilètre PQSR
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
+                   quad_path = "M "+str(PQM.x)+' '+str(PQM.y)+" q "+str(Q.x-PQM.x)+' '+str(Q.y-PQM.y)+' '+str(QSM.x-PQM.x)+' '+str(QSM.y-PQM.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
+                   quad_path = "M "+str(QSM.x)+' '+str(QSM.y)+" q "+str(S.x-QSM.x)+' '+str(S.y-QSM.y)+' '+str(RSM.x-QSM.x)+' '+str(RSM.y-QSM.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))    
+                   quad_path = "M "+str(RSM.x)+' '+str(RSM.y)+" q "+str(R.x-RSM.x)+' '+str(R.y-RSM.y)+' '+str(PRM.x-RSM.x)+' '+str(PRM.y-RSM.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
+                   
+                   '''Deuxième cercle inscrit dans le premier'''
+                   
+                   _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y+3),(PQM.x+3,PQM.y),(QSM.x,QSM.y-3),(RSM.x-3,RSM.y)), fill=color1,stroke = color1,stroke_width=0))
+                   quad_path = "M "+str(PRM.x)+' '+str(PRM.y+3)+" q "+str(P.x+3-PRM.x)+' '+str(P.y+3-(PRM.y+3))+' '+str(PQM.x+3-PRM.x)+' '+str(PQM.y-(PRM.y+3)) #Courbes de Bézier dans le quadrilètre PQSR réduit
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))
+                   quad_path = "M "+str(PQM.x+3)+' '+str(PQM.y)+" q "+str(Q.x+3-(PQM.x+3))+' '+str(Q.y-3-PQM.y)+' '+str(QSM.x-(PQM.x+3))+' '+str(QSM.y-3-PQM.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))
+                   quad_path = "M "+str(QSM.x)+' '+str(QSM.y-3)+" q "+str(S.x-3-QSM.x)+' '+str(S.y-3-(QSM.y-3))+' '+str(RSM.x-3-QSM.x)+' '+str(RSM.y-(QSM.y-3))
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))    
+                   quad_path = "M "+str(RSM.x-3)+' '+str(RSM.y)+" q "+str(R.x-3-(RSM.x-3))+' '+str(R.y+3-RSM.y)+' '+str(PRM.x-(RSM.x-3))+' '+str(PRM.y+3-RSM.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))                     
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
@@ -433,7 +477,8 @@ class Dessin:
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
-            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]
+            '''listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]''' #Liste sphère tests
+            listeSpheres = [Sphere(300,300,280,-300,40)] #Sphère profil "Vega200"
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
