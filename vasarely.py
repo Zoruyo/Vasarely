@@ -1,9 +1,9 @@
+from pushbullet import Pushbullet
 import math as math
 import svgwrite as svgwrite
 import cairosvg as cairosvg
 import os
 import cv2
-import time
 
 
 def movie(image_folder,video_name,slow_motion=1):    
@@ -174,7 +174,7 @@ class Sphere:
         if a >= r: #Erreur de projection au delà du rayon: on retire epsilon à a
             X.x = self.deformation(a-e,r,c,alpha)
             X.z = math.sqrt(r**2-(X.x)**2)
-        elif (a < r and a != e): 
+        elif (a < r and a != e): #On "pousse" les points du centre de la sphère en ajoutant epsilon, ce qui crée l'effet loupe, on les décale d'une longueur de "epsilon"
             X.x = self.deformation(a-e,r,c,alpha) 
             X.z = math.sqrt(r**2-X.x**2)  
         if a == e: #Correspond au sommet de la sphère
@@ -290,17 +290,15 @@ class Grille:
                R = tab_proj[i+1][j]
                S = tab_proj[i+1][j+1]
                c = P.dist(Q)
-               C = Point3d()
-               C.x = (Q.x+R.x)/2
-               C.y = (Q.y+R.y)/2
+               C = Point3d(Point2d((Q.x+R.x)/2,(Q.y+R.y)/2))
                C.z = (Q.z+R.z)/2                   
                for sph in listeSpheres:
-                   P0 = Point3d(P)
-                   P0.z = 0
-                   if P0.dist(sph.C) <= sph.rayon + e and P0.dist(sph.C) >= sph.rayon - e:
-                       listeP.append(P)
-                       listeQ.append(Q)
-                       listeR.append(R)
+                    P0 = Point3d(P)
+                    P0.z = 0
+                    if P0.dist(sph.C) <= sph.rayon + e and P0.dist(sph.C) >= sph.rayon - e:
+                        listeP.append(P)
+                        listeQ.append(Q)
+                        listeR.append(R)
                '''if not P is None and not Q is None and P not in listeP:
                     """ 3 façons de tracer une ligne:
                     1. fonction ligne
@@ -336,54 +334,66 @@ class Grille:
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2)) 
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=1/2))                          
                else:
-                   '''P.z -= P.z
-                   Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
-                   R.z -= R.z
-                   S.z -= S.z
-                   print([P.dist(Q)+R.dist(S),P.dist(R)+Q.dist(S)])'''
+                    '''P.z -= P.z
+                    Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
+                    R.z -= R.z
+                    S.z -= S.z
+                    print([P.dist(Q)+R.dist(S),P.dist(R)+Q.dist(S)])'''
                    
-                   '''Définition des milieux des arêtes'''
+                    '''Définition des milieux des arêtes'''
                    
-                   PQM = Point3d() 
-                   PRM = Point3d()
-                   RSM = Point3d()
-                   QSM = Point3d()
-                   PRM.x = (P.x+R.x)/2
-                   PRM.y = (P.y+R.y)/2
-                   PRM.z = (P.z+R.z)/2                   
-                   PQM.x = (P.x+Q.x)/2
-                   PQM.y = (P.y+Q.y)/2
-                   PQM.z = (P.z+Q.z)/2 
-                   QSM.x = (Q.x+S.x)/2
-                   QSM.y = (Q.y+S.y)/2
-                   QSM.z = (Q.z+S.z)/2                   
-                   RSM.x = (R.x+S.x)/2
-                   RSM.y = (R.y+S.y)/2                   
-                   RSM.z = (R.z+S.z)/2 
+                    PRM = Point3d(Point2d((P.x+R.x)/2,(P.y+R.y)/2))
+                    PRM.z = (P.z+R.z)/2
+                    QPM = Point3d(Point2d((P.x+Q.x)/2,(P.y+Q.y)/2))
+                    QPM.z = (P.z+Q.z)/2
+                    SQM = Point3d(Point2d((S.x+Q.x)/2,(S.y+Q.y)/2))
+                    SQM.z = (S.z+Q.z)/2
+                    RSM = Point3d(Point2d((R.x+S.x)/2,(R.y+S.y)/2))
+                    RSM.z = (R.z+S.z)/2
                    
-                   '''Premier cercle'''
+                    #'''Premier cercle'''
+                    #PRM, P, QPM
+                    #QPM, Q, SQM
+                    #SQM, S, RSM
+                    #RSM, R, PRM
                    
-                   _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y),(PQM.x,PQM.y),(QSM.x,QSM.y),(RSM.x,RSM.y)), fill=color3,stroke = color3,stroke_width=0))
-                   quad_path = "M "+str(PRM.x)+' '+str(PRM.y)+" q "+str(P.x-PRM.x)+' '+str(P.y-PRM.y)+' '+str(PQM.x-PRM.x)+' '+str(PQM.y-PRM.y) #Courbes de Bézier dans le quadrilètre PQSR
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
-                   quad_path = "M "+str(PQM.x)+' '+str(PQM.y)+" q "+str(Q.x-PQM.x)+' '+str(Q.y-PQM.y)+' '+str(QSM.x-PQM.x)+' '+str(QSM.y-PQM.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
-                   quad_path = "M "+str(QSM.x)+' '+str(QSM.y)+" q "+str(S.x-QSM.x)+' '+str(S.y-QSM.y)+' '+str(RSM.x-QSM.x)+' '+str(RSM.y-QSM.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))    
-                   quad_path = "M "+str(RSM.x)+' '+str(RSM.y)+" q "+str(R.x-RSM.x)+' '+str(R.y-RSM.y)+' '+str(PRM.x-RSM.x)+' '+str(PRM.y-RSM.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
+                    instr = ((PRM,P),(QPM,Q),(SQM,S),(RSM,R),(PRM,P))
+                    _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y),(QPM.x,QPM.y),(SQM.x,SQM.y),(RSM.x,RSM.y)),fill=color3))
+                    _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y+3),(QPM.x+3,QPM.y),(SQM.x,SQM.y-3),(RSM.x-3,RSM.y)),fill=color1))
+                    t = (0,2,0,-2)
+
+                    for k in range(len(instr)-1):
+                        quad_path = "M "+str(instr[k][0].x)+' '+str(instr[k][0].y)+" q "+str(instr[k][1].x-instr[k][0].x)+' '+str(instr[k][1].y-instr[k][0].y)+' '+str(instr[k+1][0].x-instr[k][0].x)+' '+str(instr[k+1][0].y-instr[k][0].y)
+                        _svgDraw.add(_svgDraw.path(quad_path, fill=color3, stroke = color3, stroke_width=0))
+                        for p in range(len(t)):
+                            if p==k:
+                                quad_path = "M "+str(instr[k][0].x+t[p])+' '+str(instr[k][0].y-t[-(p+1)])+" q "+str(instr[k][1].x-instr[k][0].x-t[-(p+1)])+' '+str(instr[k][1].y-instr[k][0].y-t[p])+' '+str(instr[k+1][0].x-instr[k][0].x-(t[-(p+1)]+t[p]))+' '+str(instr[k+1][0].y-instr[k][0].y+t[-(p+1)]-t[p])
+                                _svgDraw.add(_svgDraw.path(quad_path, fill=color1, stroke = color1, stroke_width=0))
+
+                    #quad_path = "M "+str(PRM.x)+' '+str(PRM.y+3)+" q "+str(P.x+3-PRM.x)+' '+str(P.y+3-(PRM.y+3))+' '+str(PQM.x+3-PRM.x)+' '+str(PQM.y-(PRM.y+3)) #Courbes de Bézier dans le quadrilètre PQSR réduit
+                    #quad_path = "M "+str(PRM.x)+' '+str(PRM.y)+" q "+str(P.x-PRM.x)+' '+str(P.y-PRM.y)+' '+str(PQM.x-PRM.x)+' '+str(PQM.y-PRM.y) #Courbes de Bézier dans le quadrilètre PQSR
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
                    
-                   '''Deuxième cercle inscrit dans le premier'''
+                    #quad_path = "M "+str(PQM.x)+' '+str(PQM.y)+" q "+str(Q.x-PQM.x)+' '+str(Q.y-PQM.y)+' '+str(QSM.x-PQM.x)+' '+str(QSM.y-PQM.y)
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
                    
-                   _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y+3),(PQM.x+3,PQM.y),(QSM.x,QSM.y-3),(RSM.x-3,RSM.y)), fill=color1,stroke = color1,stroke_width=0))
-                   quad_path = "M "+str(PRM.x)+' '+str(PRM.y+3)+" q "+str(P.x+3-PRM.x)+' '+str(P.y+3-(PRM.y+3))+' '+str(PQM.x+3-PRM.x)+' '+str(PQM.y-(PRM.y+3)) #Courbes de Bézier dans le quadrilètre PQSR réduit
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))
-                   quad_path = "M "+str(PQM.x+3)+' '+str(PQM.y)+" q "+str(Q.x+3-(PQM.x+3))+' '+str(Q.y-3-PQM.y)+' '+str(QSM.x-(PQM.x+3))+' '+str(QSM.y-3-PQM.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))
-                   quad_path = "M "+str(QSM.x)+' '+str(QSM.y-3)+" q "+str(S.x-3-QSM.x)+' '+str(S.y-3-(QSM.y-3))+' '+str(RSM.x-3-QSM.x)+' '+str(RSM.y-(QSM.y-3))
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))    
-                   quad_path = "M "+str(RSM.x-3)+' '+str(RSM.y)+" q "+str(R.x-3-(RSM.x-3))+' '+str(R.y+3-RSM.y)+' '+str(PRM.x-(RSM.x-3))+' '+str(PRM.y+3-RSM.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))                     
+                    #quad_path = "M "+str(QSM.x)+' '+str(QSM.y)+" q "+str(S.x-QSM.x)+' '+str(S.y-QSM.y)+' '+str(RSM.x-QSM.x)+' '+str(RSM.y-QSM.y)
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))    
+                   
+                    #quad_path = "M "+str(RSM.x)+' '+str(RSM.y)+" q "+str(R.x-RSM.x)+' '+str(R.y-RSM.y)+' '+str(PRM.x-RSM.x)+' '+str(PRM.y-RSM.y)
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color3,stroke = color3,stroke_width=0))
+                   
+                    #'''Deuxième cercle inscrit dans le premier'''
+                   
+                    #_svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y+3),(PQM.x+3,PQM.y),(QSM.x,QSM.y-3),(RSM.x-3,RSM.y)), fill=color1,stroke = color1,stroke_width=0))
+                    #quad_path = "M "+str(PRM.x)+' '+str(PRM.y+3)+" q "+str(P.x+3-PRM.x)+' '+str(P.y+3-(PRM.y+3))+' '+str(PQM.x+3-PRM.x)+' '+str(PQM.y-(PRM.y+3)) #Courbes de Bézier dans le quadrilètre PQSR réduit
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))
+                    #quad_path = "M "+str(PQM.x+3)+' '+str(PQM.y)+" q "+str(Q.x+3-(PQM.x+3))+' '+str(Q.y-3-PQM.y)+' '+str(QSM.x-(PQM.x+3))+' '+str(QSM.y-3-PQM.y)
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))
+                    #quad_path = "M "+str(QSM.x)+' '+str(QSM.y-3)+" q "+str(S.x-3-QSM.x)+' '+str(S.y-3-(QSM.y-3))+' '+str(RSM.x-3-QSM.x)+' '+str(RSM.y-(QSM.y-3))
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))    
+                    #quad_path = "M "+str(RSM.x-3)+' '+str(RSM.y)+" q "+str(R.x-3-(RSM.x-3))+' '+str(R.y+3-RSM.y)+' '+str(PRM.x-(RSM.x-3))+' '+str(PRM.y+3-RSM.y)
+                    #_svgDraw.add(_svgDraw.path(quad_path, fill=color1,stroke = color1,stroke_width=0))                     
         # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
@@ -486,6 +496,8 @@ class Dessin:
             tab_proj = self.grille.dessineCarres(listeSpheres)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin,listeSpheres)
+            if start-end <= 3:
+                push = pb.push_note("Vasarely project", "The SVG is currently saving...")
             self.dessin.save()
             print('\t',os.path.split(file_name)[1]," saved")
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
@@ -496,11 +508,12 @@ class Dessin:
         movie(image_folder,video_name,slow_motion)
         print('\t',os.path.split(video_name)[1],"saved\n")
 
-tps_debut = time.time()
+if os.getlogin() == "lebre":
+    pb = Pushbullet('YOUR KEY')
+if os.getlogin() == "DELL":
+    pb = Pushbullet('o.Mq5OQYgLLCQHrlXA2cwPgDbWDHjTbQdJ')
 d = Dessin()
-tps_fin = time.time()
-tps = tps_fin-tps_debut
-print(tps)
+push = pb.push_note("Vasarely project","Program executed !")
 
 '''
 p3 = Point2d(2,3)
