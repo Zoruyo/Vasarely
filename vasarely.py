@@ -358,7 +358,7 @@ class Grille:
                     #RSM, R, PRM
                    
                     instr = ((PRM,P),(QPM,Q),(SQM,S),(RSM,R),(PRM,P))
-                    _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y),(QPM.x,QPM.y),(SQM.x,SQM.y),(RSM.x,RSM.y)),fill=color3))
+                    _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y),(QPM.x,QPM.y),(SQM.x,SQM.y),(RSM.x,RSM.y))))
                     _svgDraw.add(_svgDraw.polygon(points=((PRM.x,PRM.y+3),(QPM.x+3,QPM.y),(SQM.x,SQM.y-3),(RSM.x-3,RSM.y)),fill=color1))
                     t = (0,2,0,-2)
 
@@ -484,7 +484,8 @@ class Dessin:
         start,end = 85,85
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
-            print(round(((i-start)/(end-start+1)*100),1),'%')
+            if start-end > 3:
+                print(round(((i-start)/(end-start+1)*100),1),'%')
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
@@ -497,12 +498,17 @@ class Dessin:
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin,listeSpheres)
             if start-end <= 3:
-                push = pb.push_note("Vasarely project", "The SVG is currently saving...")
+                push = pb.push_note("Vasarely project", "The SVG "+str(i)+" is currently saving...")
             self.dessin.save()
             print('\t',os.path.split(file_name)[1]," saved")
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print('\t',"and converted\n")
-        print("100 %\n")
+            if start-end <= 3:
+                with open(file_name.replace("svg","png"), "rb") as pic:
+                    file_data = pb.upload_file(pic, "vasarely"+str(i)+".png")
+                push = pb.push_file(**file_data)
+        if start-end > 3:
+                print("100 %\n")
         video_name = image_folder+sep+"vasarely.avi"
         slow_motion = 5
         movie(image_folder,video_name,slow_motion)
