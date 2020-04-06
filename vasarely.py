@@ -174,8 +174,8 @@ class Sphere:
         if a >= r: #Erreur de projection au delà du rayon: on retire epsilon à a
             X.x = self.deformation(a-e,r,c,alpha)
             X.z = math.sqrt(r**2-(X.x)**2)
-        elif (a < r and a != e): #On "pousse" les points du centre de la sphère en ajoutant epsilon, ce qui crée l'effet loupe, on les décale d'une longueur de "epsilon"
-            X.x = self.deformation(a-e,r,c,alpha) 
+        if (a < r and a != e):
+            X.x = self.deformation(a,r,c,alpha) 
             X.z = math.sqrt(r**2-X.x**2)  
         if a == e: #Correspond au sommet de la sphère
             X.x = 0
@@ -241,7 +241,7 @@ class Grille:
 
     def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
-        e = 15
+        e = 0
         tab_proj = []
         for i in range(self._nbColonnes):
             tab_proj_col = []
@@ -276,10 +276,8 @@ class Grille:
       
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres):
-        e = 20
+        e = 15
         listeP = []
-        listeQ = [] #On conserve également les points Q et R pour pouvoir appliquer Bézier par la suite sur chaque couple (P,Q) de l'intervalle [R+e,R-e]
-        listeR = []
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
                color1 = "red"
@@ -291,14 +289,11 @@ class Grille:
                S = tab_proj[i+1][j+1]
                c = P.dist(Q)
                C = Point3d(Point2d((Q.x+R.x)/2,(Q.y+R.y)/2))
-               C.z = (Q.z+R.z)/2                   
+               C.z = (Q.z+R.z)/2  
                for sph in listeSpheres:
-                    P0 = Point3d(P)
-                    P0.z = 0
-                    if P0.dist(sph.C) <= sph.rayon + e and P0.dist(sph.C) >= sph.rayon - e:
+                    P2D = Point3d(Point2d(P.x,P.y))
+                    if P2D.dist(sph.C) <= sph.rayon + e and P2D.dist(sph.C) >= sph.rayon - e:
                         listeP.append(P)
-                        listeQ.append(Q)
-                        listeR.append(R)
                '''if not P is None and not Q is None and P not in listeP:
                     """ 3 façons de tracer une ligne:
                     1. fonction ligne
@@ -323,17 +318,23 @@ class Grille:
                     quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
                     _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))'''
                     
-               if not P is None and not Q is None and not R is None and not S is None: #and P not in listeP: condition pour le lissage   
+               if not P is None and not Q is None and not R is None and not S is None and P not in listeP:  
                    _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%')))
-               #else: condition pour le lissage, à remplir ultérieurement   
-               if C.z == 0:  
+               elif not P is None and not Q is None and not R is None and not S is None and P in listeP:                     
+                   Q2D = Point3d(Point2d(Q.x,Q.y))
+                   quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(Q2D.x-P.x)+' '+str(Q2D.y-P.y)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier  
+                   R2D = Point3d(Point2d(R.x,R.y))
+                   quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(R2D.x-R.x)+' '+str(R2D.y-P.y)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier         
+               if C.z == 0 and P not in listeP:  
                    if (P.x <= self._nbColonnes/2*self.tailleCase and P.y >= self._nbLignes/2*self.tailleCase) or (P.x >= self._nbColonnes/2*self.tailleCase and P.y <= self._nbLignes/2*self.tailleCase):
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color3, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0)) 
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0))   
                    else:
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0)) 
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0))                          
-               else:
+               elif P not in listeP:
                     '''P.z -= P.z
                     Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
                     R.z -= R.z
@@ -463,7 +464,7 @@ class Dessin:
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
             '''listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]''' #Liste sphère tests
-            listeSpheres = [Sphere(300,300,280,-300,40)] #Sphère profil "Vega200"
+            listeSpheres = [Sphere(300,300,150,-150,40)] #Sphère profil "Vega200"
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
