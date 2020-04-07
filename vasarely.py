@@ -239,9 +239,8 @@ class Grille:
     def __str__(self):
         return str(self.tab)
 
-    def dessineCarres(self,_listeSphere):
+    def dessineCarres(self,_listeSphere,e):
         """fonction qui dessine les carrés contenant les cercles """
-        e = 0
         tab_proj = []
         for i in range(self._nbColonnes):
             tab_proj_col = []
@@ -275,9 +274,10 @@ class Grille:
  
       
     #on peut dessiner
-    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
-        e = 15
+    def dessiner(self,tab_proj,_svgDraw,listeSpheres,e):
         listeP = []
+        listeQ = []
+        listeR = []
         for i in range(self._nbColonnes-1):
             for j in range(self._nbLignes-1):
                color1 = "red"
@@ -294,47 +294,35 @@ class Grille:
                     P2D = Point3d(Point2d(P.x,P.y))
                     if P2D.dist(sph.C) <= sph.rayon + e and P2D.dist(sph.C) >= sph.rayon - e:
                         listeP.append(P)
-               '''if not P is None and not Q is None and P not in listeP:
-                    """ 3 façons de tracer une ligne:
-                    1. fonction ligne
-                    2. fonction path avec commande ligne
-                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
-                    # 1.
-                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
-                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
-                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
-                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-               elif P in listeP:   
-                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier (à définir pour chaque couple (P,Q))
-               if not P is None and not R is None and P not in listeP:
-                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 100, 16, '%')))
-               elif P in listeP:
-                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(10)+' '+str(10)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #on applique une courbure de Bézier (à définir pour chaque couple (P,R))'''
+                        listeQ.append(Q)
+                        listeR.append(R) 
+                        
+               '''Quadrilatères du plan et leur couleur'''
                     
-               if not P is None and not Q is None and not R is None and not S is None and P not in listeP:  
-                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%')))
-               elif not P is None and not Q is None and not R is None and not S is None and P in listeP:                     
-                   Q2D = Point3d(Point2d(Q.x,Q.y))
-                   quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(Q2D.x-P.x)+' '+str(Q2D.y-P.y)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+               if not P is None and not Q is None and not R is None and not S is None :#and P not in listeP:  
+                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+                   
+                   
+               '''Courbures de Bézier pour le lissage'''    
+                   
+               '''elif not P is None and not Q is None and not R is None and not S is None and P in listeP:   
+                   quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier  
-                   R2D = Point3d(Point2d(R.x,R.y))
-                   quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(R2D.x-R.x)+' '+str(R2D.y-P.y)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier         
-               if C.z == 0 and P not in listeP:  
+                   quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
+                   _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier'''  
+                   
+                   
+               '''Définition des cercles du plan (et des couleurs associées)'''
+               
+               if C.z == 0: #and P not in listeP:  
                    if (P.x <= self._nbColonnes/2*self.tailleCase and P.y >= self._nbLignes/2*self.tailleCase) or (P.x >= self._nbColonnes/2*self.tailleCase and P.y <= self._nbLignes/2*self.tailleCase):
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color3, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0)) 
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0))   
                    else:
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0)) 
                     _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0))                          
-               elif P not in listeP:
+               else: #elif P not in listeP:
+                   
                     '''P.z -= P.z
                     Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
                     R.z -= R.z
@@ -352,7 +340,7 @@ class Grille:
                     RSM = Point3d(Point2d((R.x+S.x)/2,(R.y+S.y)/2))
                     RSM.z = (R.z+S.z)/2
                    
-                    '''Dessin des quadrilatères'''
+                    '''Dessin des quadrilatères de la sphère '''
                     t = (0,3,0,-3)
                     
                     instr = ((PRM,P),(QPM,Q),(SQM,S),(RSM,R),(PRM,P))
@@ -373,49 +361,6 @@ class Grille:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
       
-
-    """J'AI MIS EN COMMENTAIRE LA FONCTION ACTUELLE ET MIS LA FONCTION DESSINER D'AVANT DISJONCTION
-    DES CAS POUR VISUALISER COMMENT CA SE PASSE NIVEAU COLLISION"""
-
-    '''
-    #on peut dessiner
-    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
-        for i in range(self._nbColonnes-1):
-            for j in range(self._nbLignes-1):
-                color1 = randomcolor()
-                color2 = randomcolor()
-                while color2 == color1:
-                    color2 = randomcolor()
-                P = tab_proj[i][j]
-                Q = tab_proj[i][j+1]
-                R = tab_proj[i+1][j]
-                c = P.dist(Q)
-                C = Point3d()
-                C.x = (Q.x+R.x)/2
-                C.y = (Q.y+R.y)/2
-                C.z = (Q.z+R.z)/2    
-                if not P is None and not Q is None:
-                    """ 3 façons de tracer une ligne:
-                    1. fonction ligne
-                    2. fonction path avec commande ligne
-                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
-                    # 1.
-                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
-                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
-                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
-                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                if not P is None and not R is None:
-                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%'))
-
-
-        # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
-        for sph in listeSpheres:
-            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
-            _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
-'''
 
 class Dessin:
     def __init__(self, hauteur = 60, largeur=60):
@@ -455,6 +400,7 @@ class Dessin:
         
         # animation : 2 spheres se rencontrent
         self.grille = Grille(hauteur,largeur,10)
+        e = 15
         start,end = 85,85
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
@@ -463,14 +409,14 @@ class Dessin:
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
-            '''listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)]''' #Liste sphère tests
-            listeSpheres = [Sphere(300,300,150,-150,40)] #Sphère profil "Vega200"
+            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)] #Liste sphère tests
+            #listeSpheres = [Sphere(300,300,150,-150,40)] #Sphère profil "Vega200"
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
             self.dessin = svgwrite.Drawing(file_name, profile='tiny')
-            tab_proj = self.grille.dessineCarres(listeSpheres)
+            tab_proj = self.grille.dessineCarres(listeSpheres,e)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
-            self.grille.dessiner(tab_proj,self.dessin,listeSpheres)
+            self.grille.dessiner(tab_proj,self.dessin,listeSpheres,e)
             if start-end <= 3:
                 push = pb.push_note("Vasarely project", "The SVG "+str(i)+" is currently saving...")
             self.dessin.save()
