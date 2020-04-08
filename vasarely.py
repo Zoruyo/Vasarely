@@ -295,13 +295,29 @@ class Grille:
                     if P2D.dist(sph.C) <= sph.rayon + e and P2D.dist(sph.C) >= sph.rayon - e:
                         listeP.append(P)
                         listeQ.append(Q)
-                        listeR.append(R) 
-                        
+                        listeR.append(R)
+
+               """ 
+               ''' Traits du plan et leur couleur '''
+
+               if not P is None and not Q is None:
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+               if not P is None and not R is None:
+                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+               """
+
                '''Quadrilatères du plan et leur couleur'''
-                    
+               
+               """ #Pour quadriller avec moitié moins de quadrilatères
+               if (i%2 == 0 and j%2 == 1) or (i%2 == 1 and j%2 == 0):
+                   if not P is None and not Q is None and not R is None and not S is None :#and P not in listeP:  
+                       _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill="white",stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+               """
+
                if not P is None and not Q is None and not R is None and not S is None :#and P not in listeP:  
-                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%'))) 
-                   
+                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill="white",stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+               
                    
                '''Courbures de Bézier pour le lissage'''    
                    
@@ -417,16 +433,16 @@ class Dessin:
             tab_proj = self.grille.dessineCarres(listeSpheres,e)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin,listeSpheres,e)
-            if start-end <= 3:
-                push = pb.push_note("Vasarely project", "The SVG "+str(i)+" is currently saving...")
+            #if start-end <= 3:
+            #    push = pb.push_note("Vasarely project", "The SVG "+str(i)+" is currently saving...")
             self.dessin.save()
             print('\t',os.path.split(file_name)[1]," saved")
             cairosvg.svg2png(url=file_name,write_to=file_name.replace("svg","png"),parent_width=1024,parent_height=660,scale=1.0)
             print('\t',"and converted\n")
-            if start-end <= 3:
-                with open(file_name.replace("svg","png"), "rb") as pic:
-                    file_data = pb.upload_file(pic, "vasarely"+str(i)+".png")
-                push = pb.push_file(**file_data)
+            #if start-end <= 3:
+            #    with open(file_name.replace("svg","png"), "rb") as pic:
+            #        file_data = pb.upload_file(pic, "vasarely"+str(i)+".png")
+            #    push = pb.push_file(**file_data)
         if start-end > 3:
                 print("100 %\n")
         video_name = image_folder+sep+"vasarely.avi"
@@ -436,10 +452,10 @@ class Dessin:
 
 if os.getlogin() == "lebre":
     pb = Pushbullet('o.H3YmuTxfGebjrDLgmg50V1GVfMy9ZM2t')
-if os.getlogin() == "DELL":
-    pb = Pushbullet('o.Mq5OQYgLLCQHrlXA2cwPgDbWDHjTbQdJ')
+#if os.getlogin() == "DELL":
+#    pb = Pushbullet('o.Mq5OQYgLLCQHrlXA2cwPgDbWDHjTbQdJ')
 d = Dessin()
-push = pb.push_note("Vasarely project","Program executed !")
+#push = pb.push_note("Vasarely project","Program executed !")
 
 '''
 p3 = Point2d(2,3)
