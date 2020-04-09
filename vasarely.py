@@ -6,7 +6,7 @@ import os
 import cv2
 
 
-def movie(image_folder,video_name,slow_motion=1):    
+def movie(image_folder,video_name,slow_motion=2):    
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
@@ -154,7 +154,7 @@ class Sphere:
     def deformation(self,a,r,c,alpha):
             return a*(1-math.sin(alpha)*(math.cos(math.pi/2-alpha)-math.sqrt((math.cos(math.pi/2-alpha))**2-(1-(r/a)**2))))
 
-    def projPoint(self,_A,e):
+    def projPoint(self,_A):
         """calcule les coordonnées du point projeté selon le cone de revolution
            sur la surface de la sphere : A'
         """
@@ -166,18 +166,15 @@ class Sphere:
         A.x -=  self.C.x  #on translate le point _A pour que le centre de la sphere soit en 0,0
         A.y -=  self.C.y
         A = A.rotZ()
-        a = A.x + e
+        a = A.x 
         r = self.rayon
         c = self.C.dist(self.Cp)
         alpha = math.atan(a/c)
         X = Point3d()
-        if a >= r: #Erreur de projection au delà du rayon: on retire epsilon à a
-            X.x = self.deformation(a-e,r,c,alpha)
+        if a != 0:
+            X.x = self.deformation(a,r,c,alpha)
             X.z = math.sqrt(r**2-(X.x)**2)
-        if (a < r and a != e):
-            X.x = self.deformation(a,r,c,alpha) 
-            X.z = math.sqrt(r**2-X.x**2)  
-        if a == e: #Correspond au sommet de la sphère
+        else: #Correspond au sommet de la sphère
             X.x = 0
             X.z = r    
         X.y = 0
@@ -239,7 +236,7 @@ class Grille:
     def __str__(self):
         return str(self.tab)
 
-    def dessineCarres(self,_listeSphere,e):
+    def dessineCarres(self,_listeSphere):
         """fonction qui dessine les carrés contenant les cercles """
         tab_proj = []
         for i in range(self._nbColonnes):
@@ -248,7 +245,7 @@ class Grille:
                 w = self.tab[i][j]
                 W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
                 for sph in _listeSphere:
-                    t = sph.projPoint(w,e)
+                    t = sph.projPoint(w)
                     t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
                     if len(t_listeSphere) >= 1:
                         biggestSphere = ordreSphere(t_listeSphere)[0]
@@ -261,7 +258,7 @@ class Grille:
                         else:
                             W_t_listeSphere = W.inSpheres(t_listeSphere)
                             if W_t_listeSphere != t_listeSphere: #si le point projeté est dans un ensemble différent de sphère
-                                Wp = biggestSphere.projPoint(t,e)
+                                Wp = biggestSphere.projPoint(t)
                                 if Wp.inSpheres(t_listeSphere) == t_listeSphere: #on projette à nouveau le point pour qu'il colle à la plus grande
                                     if W is None or Wp.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
                                         if Wp.x>=0 and Wp.y>=0 and Wp.x<self._nbColonnes*self.tailleCase and Wp.y<self._nbLignes*self.tailleCase:
@@ -314,18 +311,18 @@ class Grille:
                    if not P is None and not Q is None and not R is None and not S is None :#and P not in listeP:  
                        _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill="white",stroke=svgwrite.rgb(100, 10, 10, '%'))) 
                """
-
-               if not P is None and not Q is None and not R is None and not S is None :#and P not in listeP:  
-                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill="white",stroke=svgwrite.rgb(100, 10, 10, '%'))) 
                
-                   
-               '''Courbures de Bézier pour le lissage'''    
-                   
-               '''elif not P is None and not Q is None and not R is None and not S is None and P in listeP:   
+               if not P is None and not Q is None and not R is None and not S is None and P not in listeP:  
+                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+                                                     
+               '''elif not P is None and not Q is None and not R is None and not S is None and P in listeP: 
+                   PDebut = Point3d(P)
+                   QFin = Point3d(Q)
+                   RFin = Point3d(R) 
                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
                    _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier  
                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(R.x-P.x)+' '+str(R.y-P.y)
-                   _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier'''  
+                   _svgDraw.add(_svgDraw.path(quad_path, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) #On applique une courbure de Bézier ''' 
                    
                    
                '''Définition des cercles du plan (et des couleurs associées)'''
@@ -415,22 +412,24 @@ class Dessin:
                     os.remove(image_folder+sep+video)
         
         # animation : 2 spheres se rencontrent
-        self.grille = Grille(hauteur,largeur,10)
+        self.grille = Grille(hauteur,largeur,15)
+        r = 150
         e = 15
-        start,end = 85,85
+        start,end = 80,90
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
-            if start-end > 3:
+            if end-start > 3:
                 print(round(((i-start)/(end-start+1)*100),1),'%')
             #listeSpheres = [Sphere(-40,-120,40+i),Sphere(-40,-120,120+i)] #sphères imbriquées
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
-            listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)] #Liste sphère tests
-            #listeSpheres = [Sphere(300,300,150,-150,40)] #Sphère profil "Vega200"
+            #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)] #Liste sphère tests
+            #listeSpheres = [Sphere(315,315,150,20,40)] #Sphère profil "Vega200"
+            listeSpheres = [Sphere((315-end+i),(315-end+i),150,-20,40)]
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
-            self.dessin = svgwrite.Drawing(file_name, profile='tiny')
-            tab_proj = self.grille.dessineCarres(listeSpheres,e)
+            self.dessin = svgwrite.Drawing(file_name, (str(largeur*15), str(hauteur*15)), profile='tiny')
+            tab_proj = self.grille.dessineCarres(listeSpheres)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin,listeSpheres,e)
             #if start-end <= 3:
@@ -443,7 +442,7 @@ class Dessin:
             #    with open(file_name.replace("svg","png"), "rb") as pic:
             #        file_data = pb.upload_file(pic, "vasarely"+str(i)+".png")
             #    push = pb.push_file(**file_data)
-        if start-end > 3:
+        if end-start > 3:
                 print("100 %\n")
         video_name = image_folder+sep+"vasarely.avi"
         slow_motion = 5
