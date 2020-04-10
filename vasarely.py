@@ -328,17 +328,29 @@ class Grille:
                
                if D.z == 0 or D.z <= biais: #and P not in listeP:  
                    if (P.x <= (self._nbColonnes*self.tailleCase)/2 and P.y >= (self._nbLignes*self.tailleCase)/2) or (P.x >= (self._nbColonnes*self.tailleCase)/2 and P.y <= (self._nbLignes*self.tailleCase)/2):
-                       if not P is None and not Q is None and not R is None and not S is None:  
-                           _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=color2))   
-                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color3, stroke=color3,stroke_width=0)) 
-                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=color2, stroke=color2,stroke_width=0))   
+                       if P.x <= (self._nbColonnes*self.tailleCase)/2 and P.y >= (self._nbLignes*self.tailleCase)/2:
+                           if not P is None and not Q is None and not R is None and not S is None:  
+                               _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(((self._nbColonnes*self.tailleCase)/4)-P.x,0, (self._nbColonnes*self.tailleCase)/4-P.x, '%'),stroke=svgwrite.rgb((self._nbColonnes*self.tailleCase)/4-P.x,0, (self._nbColonnes*self.tailleCase)/4-P.x, '%')))   
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color3, stroke=color3,stroke_width=0)) 
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=color2, stroke=color2,stroke_width=0))   
+                       else:  
+                           if not P is None and not Q is None and not R is None and not S is None:  
+                               _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(((self._nbLignes*self.tailleCase)/4)-P.y,0, ((self._nbLignes*self.tailleCase)/4)-P.y, '%'),stroke=svgwrite.rgb((self._nbLignes*self.tailleCase)/4-P.y,0, ((self._nbLignes*self.tailleCase)/4)-P.y, '%')))   
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color3, stroke=color3,stroke_width=0)) 
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=color2, stroke=color2,stroke_width=0))                           
                    else: 
-                       if not P is None and not Q is None and not R is None and not S is None:  
-                           _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=color2))                        
-                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color1, stroke=color1,stroke_width=0)) 
-                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=color2, stroke=color2,stroke_width=0))                          
+                       if P.x <= (self._nbColonnes*self.tailleCase)/2 and P.y <= (self._nbLignes*self.tailleCase)/2:
+                           if not P is None and not Q is None and not R is None and not S is None:  
+                               _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(((self._nbColonnes*self.tailleCase)/4)-P.x, 0, ((self._nbColonnes*self.tailleCase)/4)-P.x, '%'),stroke=svgwrite.rgb(((self._nbColonnes*self.tailleCase)/4)-P.x, 0, ((self._nbColonnes*self.tailleCase)/4)-P.x, '%')))                        
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color1, stroke=color1,stroke_width=0)) 
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=svgwrite.rgb(0, 70, 0, '%'), stroke=color2,stroke_width=0))  
+                       elif P.x >= (self._nbColonnes*self.tailleCase)/2 and P.y >= (self._nbLignes*self.tailleCase)/2:
+                           if not P is None and not Q is None and not R is None and not S is None:  
+                               _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(P.y-((self._nbLignes*self.tailleCase)/4), 0, P.y-((self._nbLignes*self.tailleCase)/4), '%'),stroke=svgwrite.rgb(P.y-((self._nbLignes*self.tailleCase)/4),0, P.y-((self._nbLignes*self.tailleCase)/4), '%')))                       
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color1, stroke=color1,stroke_width=0)) 
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=svgwrite.rgb(0, 70, 0, '%'), stroke=color2,stroke_width=0))                            
                else: #elif P not in listeP:
-                    _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=color2))
+                    _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(0, min(P.z,70), 0, '%'),stroke=svgwrite.rgb(0, min(P.z,55), 0, '%')))
                     '''P.z -= P.z
                     Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
                     R.z -= R.z
