@@ -272,6 +272,32 @@ class Grille:
             tab_proj.append(tab_proj_col)
         return tab_proj 
  
+    '''def dessineCarres(self,_listeSphere):
+        """fonction qui dessine les carrés contenant les cercles """
+        tab_proj = []
+        for i in range(self._nbColonnes):
+            tab_proj_col = []
+            for j in range(self._nbLignes):
+                w = self.tab[i][j]
+                W = Point3d(w) #on définit un point3D à partir du Point2D de la liste tab
+                for sph in _listeSphere:
+                    t = sph.projPoint(w)
+                    t_listeSphere = t.inSpheres(_listeSphere) #on cherche les sphères qui contiennent t
+                    if len(t_listeSphere) > 1:
+                        bigSphere = ordreSphere(t_listeSphere)[0] #on projete par rapport à la plus grande sphère
+                        t = bigSphere.projPoint(w)
+                    #print("test:(",i,",",j,")=",isinstance(t,Point3d))
+                    if W is None or t.z > W.z: #Si W est dans la grille, il devient sa projection t, sinon il est égal à (0,0,0,0)
+                        if t.x>=0 and t.y>=0 and t.x<self._nbColonnes*self.tailleCase and t.y<self._nbLignes*self.tailleCase:
+                            W = Point3d(t)
+                        else:
+                            W = None
+                    #W.sphere = sph
+                tab_proj_col.append(W)
+                #print("Coordonnées grille projection: colonne "+str(i+1)+", ligne "+str(j+1)+ " (indice ("+str(i)+","+str(j)+"):",W)
+            tab_proj.append(tab_proj_col)
+        return tab_proj
+     ''' 
       
     #on peut dessiner
     def dessiner(self,tab_proj,_svgDraw,listeSpheres,e):
@@ -394,32 +420,6 @@ class Grille:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
         '''
-        
-        '''DEUXIEME FONCTION DESSINER
-        
-            #on peut dessiner
-    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
-        for i in range(self._nbColonnes-1):
-            for j in range(self._nbLignes-1):
-                P = tab_proj[i][j]
-                Q = tab_proj[i][j+1]
-                R = tab_proj[i+1][j]
-                if not P is None and not Q is None:
-                    """ 3 façons de tracer une ligne:
-                    1. fonction ligne
-                    2. fonction path avec commande ligne
-                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
-                    # 1.
-                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
-                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
-                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
-                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
-                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
-                if not P is None and not R is None:
-                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
-       '''             
 
 class Dessin:
     def __init__(self, hauteur =30, largeur=30):
