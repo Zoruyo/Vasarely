@@ -6,12 +6,12 @@ import os
 import cv2
 
 
-def movie(image_folder,video_name,slow_motion=2):    
+def movie(image_folder,video_name,slow_motion=1):    
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     frame = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = frame.shape
     
-    video = cv2.VideoWriter(video_name, 0, 40, (width,height))
+    video = cv2.VideoWriter(video_name,0,40,(width,height))
     
     for image in images:
         for i in range(slow_motion):
@@ -118,7 +118,6 @@ class Point3d(Point2d):
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
     def inSpheres(self,_listeSphere):
         biais = 10**(-2)
-        #biais = 0
         listeSphere = []
         for sph in _listeSphere:
             if self.dist(sph.C) <= sph.rayon+biais:
@@ -279,14 +278,15 @@ class Grille:
             for j in range(self._nbLignes-1):
                color1 = "red"
                color2 = "green"
-               color3 = "blue"
+               color3 = "blue"               
                P = tab_proj[i][j]
                Q = tab_proj[i][j+1]
                R = tab_proj[i+1][j]
                S = tab_proj[i+1][j+1]
                c = P.dist(Q)
-               C = Point3d(Point2d((Q.x+R.x)/2,(Q.y+R.y)/2))
-               C.z = (Q.z+R.z)/2  
+               D = Point3d(Point2d((Q.x+R.x)/2,(Q.y+R.y)/2))
+               D.z = (Q.z+R.z)/2  
+               biais = 5
                for sph in listeSpheres:
                     P2D = Point3d(Point2d(P.x,P.y))
                     if P2D.dist(sph.C) <= sph.rayon + e and P2D.dist(sph.C) >= sph.rayon - e:
@@ -312,8 +312,7 @@ class Grille:
                        _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill="white",stroke=svgwrite.rgb(100, 10, 10, '%'))) 
                """
                
-               if not P is None and not Q is None and not R is None and not S is None and P not in listeP:  
-                   _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=svgwrite.rgb(100, 10, 10, '%'))) 
+
                                                      
                '''elif not P is None and not Q is None and not R is None and not S is None and P in listeP: 
                    PDebut = Point3d(P)
@@ -327,15 +326,19 @@ class Grille:
                    
                '''Définition des cercles du plan (et des couleurs associées)'''
                
-               if C.z == 0: #and P not in listeP:  
-                   if (P.x <= self._nbColonnes/2*self.tailleCase and P.y >= self._nbLignes/2*self.tailleCase) or (P.x >= self._nbColonnes/2*self.tailleCase and P.y <= self._nbLignes/2*self.tailleCase):
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color3, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0)) 
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0))   
-                   else:
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/2, fill=color1, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0)) 
-                    _svgDraw.add(_svgDraw.circle(center=(C.x,C.y),r=c/3, fill=color2, stroke=svgwrite.rgb(10, 100, 16, '%'),stroke_width=0))                          
+               if D.z == 0 or D.z <= biais: #and P not in listeP:  
+                   if (P.x <= (self._nbColonnes*self.tailleCase)/2 and P.y >= (self._nbLignes*self.tailleCase)/2) or (P.x >= (self._nbColonnes*self.tailleCase)/2 and P.y <= (self._nbLignes*self.tailleCase)/2):
+                       if not P is None and not Q is None and not R is None and not S is None:  
+                           _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=color2))   
+                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color3, stroke=color3,stroke_width=0)) 
+                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=color2, stroke=color2,stroke_width=0))   
+                   else: 
+                       if not P is None and not Q is None and not R is None and not S is None:  
+                           _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=color2))                        
+                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color1, stroke=color1,stroke_width=0)) 
+                           _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=color2, stroke=color2,stroke_width=0))                          
                else: #elif P not in listeP:
-                   
+                    _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=color2,stroke=color2))
                     '''P.z -= P.z
                     Q.z -= Q.z #Contre-exemples pour le théorème de Pitot
                     R.z -= R.z
@@ -369,14 +372,14 @@ class Grille:
                                 quad_path = "M "+str(instr[k][0].x+t[p])+' '+str(instr[k][0].y-t[-(p+1)])+" q "+str(instr[k][1].x-instr[k][0].x-t[-(p+1)])+' '+str(instr[k][1].y-instr[k][0].y-t[p])+' '+str(instr[k+1][0].x-instr[k][0].x-(t[-(p+1)]+t[p]))+' '+str(instr[k+1][0].y-instr[k][0].y+t[-(p+1)]-t[p])
                                 _svgDraw.add(_svgDraw.path(quad_path, fill=color1, stroke = color1, stroke_width=0))
                    
-        # Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
+        '''# Affichage des intervalles [R-e,R+e] de la liste de sphères n°4 à la frame n°115
         for sph in listeSpheres:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
-      
+        '''
 
 class Dessin:
-    def __init__(self, hauteur = 60, largeur=60):
+    def __init__(self, hauteur =30, largeur=30):
         #self.grille = Grille(100,100,10)
         #print("Grille=",self.grille)
         #self.sphere1 = Sphere(80,30,120)
@@ -412,10 +415,10 @@ class Dessin:
                     os.remove(image_folder+sep+video)
         
         # animation : 2 spheres se rencontrent
-        self.grille = Grille(hauteur,largeur,15)
-        r = 150
+        self.grille = Grille(hauteur,largeur,30)
+        r = 300
         e = 15
-        start,end = 80,90
+        start,end = 80,80
         print("Modeling from frame",start,"to",end,"\n\n")
         for i in range(start,end+1):
             if end-start > 3:
@@ -425,10 +428,10 @@ class Dessin:
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)] #Liste sphère tests
             #listeSpheres = [Sphere(315,315,150,20,40)] #Sphère profil "Vega200"
-            listeSpheres = [Sphere((315-end+i),(315-end+i),150,-20,40)]
+            listeSpheres = [Sphere(436,436,r,-120,40)]
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
-            self.dessin = svgwrite.Drawing(file_name, (str(largeur*15), str(hauteur*15)), profile='tiny')
+            self.dessin = svgwrite.Drawing(file_name, (str(largeur*30), str(hauteur*30)), profile='tiny')
             tab_proj = self.grille.dessineCarres(listeSpheres)
             #tab_proj = self.grille.lissage(tab_proj,listeSpheres)
             self.grille.dessiner(tab_proj,self.dessin,listeSpheres,e)
@@ -445,7 +448,7 @@ class Dessin:
         if end-start > 3:
                 print("100 %\n")
         video_name = image_folder+sep+"vasarely.avi"
-        slow_motion = 5
+        slow_motion = 2
         movie(image_folder,video_name,slow_motion)
         print('\t',os.path.split(video_name)[1],"saved\n")
 
