@@ -93,6 +93,7 @@ class Point3d(Point2d):
     def norm(self):
         """calcule la norme du vecteur"""
         return math.sqrt(self.x**2+self.y**2+self.z**2)
+    
     def rotZ(self):
         """rotation autour de l'axe z : retourne un nouveau point qui correspond
         à la projection du point sur l'axe x (beta contient l'angle)
@@ -113,9 +114,11 @@ class Point3d(Point2d):
             self.beta = _beta
         self.x = t*math.cos(self.beta)
         self.y = t*math.sin(self.beta)
+        
     def dist(self,_A):
         """Calcule la distance euclidienne"""
         return math.sqrt((self.x-_A.x)**2+(self.y-_A.y)**2+(self.z-_A.z)**2)
+    
     def inSpheres(self,_listeSphere):
         biais = 10**(-2)
         listeSphere = []
@@ -264,9 +267,10 @@ class Grille:
                                             W = Point3d(Wp)
                                         else:
                                             W = None
+                                            
                 tab_proj_col.append(W)
             tab_proj.append(tab_proj_col)
-        return tab_proj
+        return tab_proj 
  
       
     #on peut dessiner
@@ -348,7 +352,8 @@ class Grille:
                            if not P is None and not Q is None and not R is None and not S is None:  
                                _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(P.y-((self._nbLignes*self.tailleCase)/4), 0, P.y-((self._nbLignes*self.tailleCase)/4), '%'),stroke=svgwrite.rgb(P.y-((self._nbLignes*self.tailleCase)/4),0, P.y-((self._nbLignes*self.tailleCase)/4), '%')))                       
                                _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/2, fill=color1, stroke=color1,stroke_width=0)) 
-                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=svgwrite.rgb(0, 70, 0, '%'), stroke=color2,stroke_width=0))                            
+                               _svgDraw.add(_svgDraw.circle(center=(D.x,D.y),r=c/3, fill=svgwrite.rgb(0, 70, 0, '%'), stroke=color2,stroke_width=0))
+                               
                else: #elif P not in listeP:
                     _svgDraw.add(_svgDraw.polygon(points=((P.x,P.y),(Q.x,Q.y),(S.x,S.y),(R.x,R.y)), fill=svgwrite.rgb(0, min(P.z,70), 0, '%'),stroke=svgwrite.rgb(0, min(P.z,55), 0, '%')))
                     '''P.z -= P.z
@@ -389,6 +394,32 @@ class Grille:
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon-e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%')))
             _svgDraw.add(_svgDraw.circle((sph.C.x,sph.C.y), sph.rayon+e, fill="none", stroke=svgwrite.rgb(100, 10, 10, '%'))) 
         '''
+        
+        '''DEUXIEME FONCTION DESSINER
+        
+            #on peut dessiner
+    def dessiner(self,tab_proj,_svgDraw,listeSpheres):
+        for i in range(self._nbColonnes-1):
+            for j in range(self._nbLignes-1):
+                P = tab_proj[i][j]
+                Q = tab_proj[i][j+1]
+                R = tab_proj[i+1][j]
+                if not P is None and not Q is None:
+                    """ 3 façons de tracer une ligne:
+                    1. fonction ligne
+                    2. fonction path avec commande ligne
+                    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
+                    # 1.
+                    #_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
+                    # 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    #line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    #_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                    # 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+                    quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+                    _svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+                if not P is None and not R is None:
+                    _svgDraw.add(_svgDraw.line((P.x, P.y), (R.x, R.y), stroke=svgwrite.rgb(10, 100, 16, '%')))
+       '''             
 
 class Dessin:
     def __init__(self, hauteur =30, largeur=30):
@@ -439,7 +470,7 @@ class Dessin:
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150*i,40),Sphere(335,465,82,-70+i//20,40)]
             #listeSpheres = [Sphere(120,240,107,-70+2*i//10,40),Sphere(230,300,82,70+i//20,40)]    
             #listeSpheres = [Sphere(120+i,240+i,min(122,20+i),-150,40),Sphere(335,465,82,-70+i//20,40)] #Liste sphère tests
-            #listeSpheres = [Sphere(315,315,150,20,40)] #Sphère profil "Vega200"
+            #listeSpheres = [Sphere(315-end+i,315-end+i,150,-40,40)] #Sphère profil "Vega200"
             listeSpheres = [Sphere(436,436,r,-120,40)]
             size_numbers = str(max(start,end))
             file_name = image_folder+sep+str(i).zfill(len(size_numbers))+".svg"
@@ -466,10 +497,10 @@ class Dessin:
 
 if os.getlogin() == "lebre":
     pb = Pushbullet('o.H3YmuTxfGebjrDLgmg50V1GVfMy9ZM2t')
-#if os.getlogin() == "DELL":
-#    pb = Pushbullet('o.Mq5OQYgLLCQHrlXA2cwPgDbWDHjTbQdJ')
+if os.getlogin() == "DELL":
+    pb = Pushbullet('o.Mq5OQYgLLCQHrlXA2cwPgDbWDHjTbQdJ')
 d = Dessin()
-#push = pb.push_note("Vasarely project","Program executed !")
+push = pb.push_note("Vasarely project","Program executed !")
 
 '''
 p3 = Point2d(2,3)
@@ -545,3 +576,21 @@ S = Sphere()
 X = S.proj(A0)
 print(X)
 """
+
+""" 3 façons de tracer une ligne:
+    1. fonction ligne
+    2. fonction path avec commande ligne
+    3. fonction path avec commande quadratique bézier (moins optimisée mais adaptable pour lissage) """
+
+# 1.
+#_svgDraw.add(_svgDraw.line((P.x, P.y), (Q.x, Q.y), stroke=svgwrite.rgb(10, 100, 100, '%')))
+
+# 2. M: indique le début de tracé; P = Point de départ; l: indique la méthode "ligne"; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+#line_path = "M "+str(P.x)+' '+str(P.y)+" l "+str(Q.x-P.x)+' '+str(Q.y-P.y)
+#_svgDraw.add(_svgDraw.path(line_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+
+# 3. M: indique le début de tracé; P = Point de départ; q: indique la méthode "quadratique"; (Q.x-S.x,Q.y-S.y) = (O,O) vecteur nul "ressort" qui tire la courbe; (Q.x-P.x,Q.y-P.y) = vecteur à appliquer à P
+#quad_path = "M "+str(P.x)+' '+str(P.y)+" q "+str(0)+' '+str(0)+' '+str(Q.x-P.x)+' '+str(Q.y-P.y)
+#_svgDraw.add(_svgDraw.path(quad_path, stroke=svgwrite.rgb(10, 10, 100, '%')))
+
+    
